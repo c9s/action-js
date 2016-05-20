@@ -1,15 +1,15 @@
 console.clear();
 describe('Action', function() {
-  describe('Simple', function() {
+  Action.ajaxOptions.url = "/api";
+
+  describe('runAction Simple', function() {
     it('should return success response in the callback', function (done) {
-      Action.ajaxOptions.url = "/api";
       runAction('TestApp::Action::Simple', { "a": 1 }, function(resp) {
         expect(resp.success).to.be.true;
         done();
       });
     });
     it('should return success response in the 2nd callback parameter', function (done) {
-      Action.ajaxOptions.url = "/api";
       runAction('TestApp::Action::Simple', function(resp) {
         expect(resp.success).to.be.true;
         done();

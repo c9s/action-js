@@ -25,18 +25,26 @@ var compiler = webpack({
   }
 });
 var server = new webpackDevServer(compiler, {
-  quiet: false,
-  stats: { colors: true },
-  proxy: {
+  "quiet": false,
+  "stats": { "colors": true },
+  "proxy": {
+    "/tests/index.php": {
+      "target": {
+        "host": "action-js.dev",
+        "protocol": 'http:',
+        "port": 80
+      },
+      "changeOrigin": true,
+      "secure": false
+    },
     "/api": {
       "target": {
         "host": "action-js.dev",
         "protocol": 'http:',
         "port": 80
       },
-      ignorePath: true,
-      changeOrigin: true,
-      secure: false
+      "changeOrigin": true,
+      "secure": false
     }
   }
 });

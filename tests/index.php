@@ -1,4 +1,6 @@
-<html>
+<?php
+require dirname(__DIR__) . "/vendor/autoload.php";
+?><html>
 <head>
   <meta charset="utf-8">
   <title>ActionKit Tests</title>
@@ -6,7 +8,6 @@
 </head>
 <body>
   <div id="mocha"></div>
-
   <script src="assets/jquery.min.js"></script>
   <!--  <script src="https://cdn.rawgit.com/Automattic/expect.js/0.3.1/index.js"></script> -->
   <script src="assets/expect.js"></script>
