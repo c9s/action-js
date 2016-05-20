@@ -1,0 +1,15 @@
+---
+collections:
+- file: [ images ]
+- css:
+  - stylesheets/action.css
+- js:
+  - setup.js
+  - src/action.js
+  - src/search-action.js
+  - src/action-growl.js
+  - src/action-msgbox.js
+  - src/action-highlight.js
+  - src/action-bootstrap-highlight.js
+  - src/action-loader.js
+  watch: 'coffee -w -c *.coffee'
