@@ -265,7 +265,7 @@ var Action = (function() {
     }
   };
 
-  Action.prototype._createSuccessHandler = function(formEl, options, cb, retrycb) {
+  Action.prototype._createSuccessHandler = function(formEl, deferred, options, cb, retrycb) {
     var $self, self;
     self = this;
     $self = $(self);
@@ -289,7 +289,10 @@ var Action = (function() {
         self._processRegionOptions(options, resp);
         self._processElementOptions(options, resp);
         self._processLocationOptions(options, resp);
+        deferred.resolve(resp);
       } else if (resp.error) {
+        deferred.reject(resp);
+
         console.log(resp);
         if (resp.csrf_token_mismatch || resp.csrf_token_expired || resp.csrf_token_invalid) {
           console.error("csrf token mismatched");
@@ -314,7 +317,7 @@ var Action = (function() {
     };
   };
 
-  Action.prototype._createErrorHandler = function(formEl, options) {
+  Action.prototype._createErrorHandler = function(formEl, deferred, options) {
     return (function(_this) {
       return function(error, t, m) {
         if (error.responseText) {
@@ -381,7 +384,7 @@ var Action = (function() {
     */
 
   Action.prototype.run = function(actionName, args, arg1, arg2) {
-    var cb, doSubmit, payload;
+    var cb, payload;
     if (typeof arg1 === "function") {
       cb = arg1;
     } else if (typeof arg1 === "object") {
@@ -395,7 +398,14 @@ var Action = (function() {
         return false;
       }
     }
-    doSubmit = (function(_this) {
+
+    var deferred = jQuery.Deferred();
+
+    var doSubmit = (function(_this) {
+      /**
+       * @param {object} payload
+       * @return {jQuery.Deferred}
+       */
       return function(payload) {
         var errorHandler, formEl, postUrl, successHandler;
         if (_this.options.onSubmit) {
@@ -416,14 +426,15 @@ var Action = (function() {
         } else {
           postUrl = window.location.pathname;
         }
-        errorHandler = _this._createErrorHandler(formEl, _this.options);
-        successHandler = _this._createSuccessHandler(formEl, _this.options, cb);
-        return jQuery.ajax($.extend(Action.ajaxOptions, {
+        errorHandler = _this._createErrorHandler(formEl, deferred, _this.options);
+        successHandler = _this._createSuccessHandler(formEl, deferred, _this.options, cb);
+        jQuery.ajax($.extend(Action.ajaxOptions, {
           "url": postUrl,
           "data": payload,
           "error": errorHandler,
           "success": successHandler
         }));
+        return deferred;
       };
     })(this);
     payload = {
@@ -436,12 +447,7 @@ var Action = (function() {
         payload.__csrf_token = Cookies.get('csrf');
       }
     }
-    doSubmit(payload).fail(function(a) {
-      return console.log('fail', a);
-    }).done(function(a) {
-      return console.log('done', a);
-    });
-    return false;
+    return doSubmit(payload);
   };
 
 
@@ -480,10 +486,11 @@ var Action = (function() {
   };
 
   Action.prototype.submitWithAIM = function(data, cb) {
+    var deferred = jQuery.Deferred();
     var $form, actionName, errorHandler, successHandler, that;
     $form = this.form();
-    successHandler = this._createSuccessHandler($form, this.options, cb);
-    errorHandler = this._createErrorHandler($form, this.options);
+    successHandler = this._createSuccessHandler($form, deferred, this.options, cb);
+    errorHandler = this._createErrorHandler($form, deferred, this.options);
     if (this.options.beforeUpload) {
       this.options.beforeUpload.call(this, $form, data);
     }
@@ -498,7 +505,7 @@ var Action = (function() {
       throw "action name field is required";
     }
     that = this;
-    return AIM.submit($form.get(0), {
+    AIM.submit($form.get(0), {
       onStart: function() {
         if (that.options.beforeUpload) {
           that.options.beforeUpload.call(that, $form, json);
@@ -520,6 +527,7 @@ var Action = (function() {
         return true;
       }
     });
+    return deferred;
   };
 
 
