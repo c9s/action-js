@@ -1,0 +1,8 @@
+{
+    "name": "corneltek/action-js",
+    "version": "0.1",
+    "require-dev": {
+        "corneltek/locale": "@dev",
+        "corneltek/actionkit": "dev-master"
+    }
+}
