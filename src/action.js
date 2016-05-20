@@ -16,13 +16,12 @@ USAGE
     onResult:
   })
 */
+import ActionPlugin from "./action-plugin";
 import FormUtils from "./formutils";
 
-var Action, ActionPlugin;
 
-
-Action = (function() {
-  Action.prototype.ajaxOptions = {
+var Action = (function() {
+  Action.ajaxOptions = {
     dataType: 'json',
     type: 'post',
     timeout: 8000
@@ -231,7 +230,8 @@ Action = (function() {
   Action.prototype._processRegionOptions = function(options, resp) {
     var form, reg, regionKeys;
     if (typeof Region === "undefined") {
-      throw "Region is undefined.";
+      console.warn("Region is undefined. region-js is not loaded.");
+      return;
     }
     form = this.form();
     if (form) {
@@ -407,15 +407,18 @@ Action = (function() {
             FormUtils.disableInputs(formEl);
           }
         }
-        postUrl = window.location.pathname;
         if (formEl && formEl.attr('action')) {
           postUrl = formEl.attr('action');
         } else if (_this.actionPath) {
           postUrl = _this.actionPath;
+        } else if (Action.ajaxOptions.url) {
+          postUrl = Action.ajaxOptions.url;
+        } else {
+          postUrl = window.location.pathname;
         }
         errorHandler = _this._createErrorHandler(formEl, _this.options);
         successHandler = _this._createSuccessHandler(formEl, _this.options, cb);
-        return jQuery.ajax($.extend(_this.ajaxOptions, {
+        return jQuery.ajax($.extend(Action.ajaxOptions, {
           "url": postUrl,
           "data": payload,
           "error": errorHandler,
@@ -560,54 +563,5 @@ Action.reset = function() {
   return Action._globalPlugins = [];
 };
 
-window.submitActionWith = function(f, extendData, arg1, arg2) {
-  return Action.form(f).submitWith(extendData, arg1, arg2);
-};
 
-window.submitAction = function(f, arg1, arg2) {
-  return Action.form(f).submit(arg1, arg2);
-};
-
-window.runAction = function(actionName, args, arg1, arg2) {
-  var a;
-  a = new Action;
-  return a.run(actionName, args, arg1, arg2);
-};
-
-window.Action = $.Action = Action;
-
-
-/*
-
-  a = new ActionPlugin(action,{ ...options...  })
-  a = new ActionPlugin(action)
-  a = new ActionPlugin({ ... })
-  */
-
-ActionPlugin = (function() {
-  ActionPlugin.prototype.formEl = null;
-
-  ActionPlugin.prototype.action = null;
-
-  ActionPlugin.prototype.config = {};
-
-  function ActionPlugin(a1, a2) {
-    if (a1 && a2) {
-      this.config = a2 || {};
-      this.init(a1);
-    } else if (a1 instanceof Action) {
-      this.init(a1);
-    } else if (typeof a1 === 'object') {
-      this.config = a1;
-    }
-  }
-
-  ActionPlugin.prototype.init = function(action) {
-    this.action = action;
-    return this.form = this.action.form();
-  };
-
-  return ActionPlugin;
-
-})();
-window.ActionPlugin = ActionPlugin;
+export default Action;
