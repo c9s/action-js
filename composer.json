@@ -4,5 +4,8 @@
     "require-dev": {
         "corneltek/locale": "@dev",
         "corneltek/actionkit": "dev-master"
+    },
+    "autoload": {
+        "psr-4": { "TestApp\\": "app/TestApp/" }
     }
 }
