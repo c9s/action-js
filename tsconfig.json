@@ -1,0 +1,12 @@
+ {
+  "compilerOptions": {
+    "target": "es5",
+    "sourceMap": true,
+    "outDir": "build/"
+  },
+  "exclude": ["node_modules"],
+  "files": [
+    "typings/index.d.ts",
+    "src/entry.ts"
+  ]
+}

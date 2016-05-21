@@ -2,8 +2,8 @@ var path = require('path');
 var webpack = require("webpack");
 var webpackDevServer = require("webpack-dev-server");
 var nodeModulesPath = path.resolve(__dirname, 'node_modules');
-var compiler = webpack({
-  entry: "./src/entry.js",
+module.exports = {
+  entry: "./src/entry.ts",
   output: {
     path: __dirname,
     filename: "action.bundle.js"
@@ -13,7 +13,7 @@ var compiler = webpack({
         test: /\.(js|jsx)$/,
         loaders: ['babel'],
         exclude: [nodeModulesPath]
-    }, ],
+    }, { test: /\.tsx?$/, loader: 'ts-loader' }],
   },
   externals: {
     // don't bundle the 'react' npm package with our bundle.js
@@ -21,31 +21,6 @@ var compiler = webpack({
     'react': 'React'
   },
   resolve: {
-    extensions: ['', '.js', '.jsx']
+    extensions: ['', '.js', '.jsx', '.ts', '.tsx']
   }
-});
-var server = new webpackDevServer(compiler, {
-  "quiet": false,
-  "stats": { "colors": true },
-  "proxy": {
-    "/tests/index.php": {
-      "target": {
-        "host": "action-js.dev",
-        "protocol": 'http:',
-        "port": 80
-      },
-      "changeOrigin": true,
-      "secure": false
-    },
-    "/api": {
-      "target": {
-        "host": "action-js.dev",
-        "protocol": 'http:',
-        "port": 80
-      },
-      "changeOrigin": true,
-      "secure": false
-    }
-  }
-});
-server.listen(8080);
+};

@@ -5,6 +5,7 @@ CsrfToken manager
   ActionCsrfToken.get success: (csrfToken) ->
     ....
   */
+declare var Cookies;
 
  // ActionCsrfToken
 export default {

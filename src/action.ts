@@ -16,28 +16,59 @@ USAGE
     onResult:
   })
 */
+declare var Region;
+declare var Cookies;
+declare var tinyMCE;
+
+import "jquery";
 import ActionPlugin from "./action-plugin";
 import FormUtils from "./formutils";
+import AIM from "./aim";
 
+interface ActionPlugin {
+  init;
+}
 
-var Action = (function() {
-  Action.ajaxOptions = {
-    dataType: 'json',
-    type: 'post',
-    timeout: 8000
+interface ActionSettings {
+
+  plugins?: Array<ActionPlugin>;
+  confirm?: string;
+  disableInput?: boolean;
+
+  onSubmit? ():any;
+  beforeSubmit? ():any;
+  beforeUpload? ():any;
+}
+
+class Action {
+
+  actionName: string;
+
+  plugins: Array<Object>;
+
+  formEl: any;
+
+  options: ActionSettings;
+
+  actionPath: string;
+
+  /**
+   * Contains the the action plugin factories
+   */
+  static _globalPlugins = [];
+
+  static ajaxOptions: JQueryAjaxSettings = {
+    "dataType": "json",
+    "type": "post",
+    "timeout": 8000
   };
 
-  Action.prototype.plugins = [];
+  constructor(arg1 = null, arg2 = null) {
+    this.plugins = [];
+    this.actionPath = null;
+    this.options = { "disableInput": true };
 
-  Action.prototype.actionPath = null;
-
-  Action.prototype.options = {
-    disableInput: true
-  };
-
-  function Action(arg1, arg2) {
     var form, opts = {};
-
     if (arg1 instanceof jQuery) {
       form = arg1;
     } else if (arg1 instanceof HTMLFormElement) {
@@ -55,25 +86,23 @@ var Action = (function() {
         opts = arg2;
       }
     }
-    var j, len, plugin, ref;
-    this.options = $.extend({}, opts); // copy
+    this.options = jQuery.extend({}, opts); // copy
     if (this.options.plugins) {
-      ref = this.options.plugins;
-      for (j = 0, len = ref.length; j < len; j++) {
-        plugin = ref[j];
-        this.plug(plugin);
-      }
+      this.options.plugins.forEach((p) => {
+        this.plug(p);
+      });
     }
     Action._globalPlugins.forEach((p,i) => {
-      this.plug(p.plugin, p.options);
+      var plugin = new plugin(this, p.options);
+      this.plug(plugin);
     });
   }
 
   /**
    * @param {HTMLFormElement|jQuery} f
    */
-  Action.prototype.setForm = function(f) {
-    this.formEl = $(f);
+  setForm(f) {
+    this.formEl = jQuery(f);
     this.formEl.attr('method', 'post');
     this.formEl.attr("enctype", "multipart/form-data");
     this.formEl.data("actionObject", this);
@@ -85,65 +114,55 @@ var Action = (function() {
       throw "action signature is undefined.";
     }
     if (!this.formEl.find('input[name="__ajax_request"]').get(0)) {
-      this.formEl.append($('<input>').attr({
+      this.formEl.append(jQuery('<input>').attr({
         type: "hidden",
         name: "__ajax_request",
         value: 1
       }));
     }
-    return this.formEl.submit((function(_this) {
-      return function() {
-        var e, ret;
-        try {
-          ret = _this.submit();
-          if (ret) {
-            return ret;
-          }
-        } catch (_error) {
-          e = _error;
-          if (window.console) {
-            console.error("Form submit error", e.message, e);
-          }
+    return this.formEl.submit(() => {
+      var e, ret;
+      try {
+        ret = this.submit();
+        if (ret) {
+          return ret;
         }
-        return false;
-      };
-    })(this));
-  };
+      } catch (_error) {
+        e = _error;
+        if (window.console) {
+          console.error("Form submit error", e.message, e);
+        }
+      }
+      return false;
+    });
+  }
 
-  Action.prototype.form = function(f) {
+  form(f = null) {
     if (f) {
       this.setForm(f);
     }
     return this.formEl;
-  };
+  }
 
   /**
    * add plugin
    */
-  Action.prototype.plug = function(plugin, options) {
-    var p;
-    if (typeof plugin === 'function') {
-      p = new plugin(this, options);
-      this.plugins.push(p);
-      return p;
-    } else if (plugin instanceof ActionPlugin) {
-      plugin.init(this);
-      this.plugins.push(plugin);
-      return plugin;
-    }
-  };
+  plug(plugin:ActionPlugin) {
+    plugin.init(this);
+    this.plugins.push(plugin);
+  }
 
   /**
    * set action path
    */
-  Action.prototype.setPath = function(path) {
+  setPath(path) {
     return this.actionPath = path;
-  };
+  }
 
   /**
    * get the current data from the form
    */
-  Action.prototype.getFormData = function() {
+  getFormData() {
     var data, isIndexed, that;
     that = this;
     data = {};
@@ -160,7 +179,7 @@ var Action = (function() {
 
     FormUtils.findFields(f).each(function(i, n) {
       var el, name, val;
-      el = $(n);
+      el = jQuery(n);
       name = el.attr('name');
       if (!name) {
         return;
@@ -192,43 +211,43 @@ var Action = (function() {
       }
     });
     return data;
-  };
+  }
 
-  Action.prototype.setup = function(options) {
-    this.options = $.extend(this.options, options);
+  setup(options) {
+    this.options = jQuery.extend(this.options, options);
     return this;
-  };
+  }
 
-  Action.prototype._processElementOptions = function(options) {
+  _processElementOptions(options) {
     var el;
     if (options.removeTr) {
-      el = $($(options.removeTr).parents('tr').get(0));
+      el = jQuery(jQuery(options.removeTr).parents('tr').get(0));
       el.fadeOut('fast', function() {
-        return $(this).remove();
+        return jQuery(this).remove();
       });
     }
     if (options.remove) {
-      return $(options.remove).remove();
+      return jQuery(options.remove).remove();
     }
-  };
+  }
 
-  Action.prototype._processFormOptions = function(options, resp) {
+  _processFormOptions(options, resp) {
     if (options.clear) {
       FormUtils.findTextFields(this.form()).each(function(i, e) {
         var n;
-        n = $(this).attr('name');
+        n = jQuery(this).attr('name');
         if (n === "action" || n === "__action" || n === "__csrf_token" || n === "__ajax_request") {
           return;
         }
-        return $(this).val("");
+        return jQuery(this).val("");
       });
     }
     if (resp.success && options.fadeOut) {
       return this.form().fadeOut('slow');
     }
-  };
+  }
 
-  Action.prototype._processLocationOptions = function(options, resp) {
+  _processLocationOptions(options, resp) {
     if (options.reload) {
       return setTimeout((function() {
         return window.location.reload();
@@ -242,10 +261,10 @@ var Action = (function() {
         return window.location = resp.redirect;
       }), resp.delay * 1000 || options.delay || 0);
     }
-  };
+  }
 
-  Action.prototype._processRegionOptions = function(options, resp) {
-    var form, reg, regionKeys;
+  _processRegionOptions(options, resp) {
+    var form, reg;
     if (typeof Region === "undefined") {
       console.warn("Region is undefined. region-js is not loaded.");
       return;
@@ -253,10 +272,12 @@ var Action = (function() {
     form = this.form();
     if (form) {
       reg = Region.of(form);
-      regionKeys = ['refreshSelf', 'refresh', 'refreshParent', 'refreshWithId', 'removeRegion', 'emptyRegion'];
-      $(regionKeys).each(function(i, e) {
-        if (options[e] === true) {
-          return options[e] = reg;
+
+      // update region to the related option keys
+      var regionKeys:Array<string> = ['refreshSelf', 'refresh', 'refreshParent', 'refreshWithId', 'removeRegion', 'emptyRegion'];
+      regionKeys.forEach((key:string) => {
+        if (typeof options[key] !== "undefined") {
+          options[key] = reg;
         }
       });
     }
@@ -280,12 +301,12 @@ var Action = (function() {
     if (options.emptyRegion) {
       return Region.of(options.emptyRegion).fadeEmpty();
     }
-  };
+  }
 
-  Action.prototype._createSuccessHandler = function(formEl, deferred, options, cb, retrycb) {
+  _createSuccessHandler(formEl, deferred, options, cb, retrycb:Function = null) {
     var $self, self;
     self = this;
-    $self = $(self);
+    $self = jQuery(self);
     return function(resp) {
       var debugDiv, ret;
       $self.trigger('action.on_result', [resp]);
@@ -330,26 +351,24 @@ var Action = (function() {
       }
       return true;
     };
-  };
+  }
 
-  Action.prototype._createErrorHandler = function(formEl, deferred, options) {
-    return (function(_this) {
-      return function(error, t, m) {
-        if (error.responseText) {
-          if (window.console) {
-            console.error(error.responseText);
-          } else {
-            alert(error.responseText);
-          }
+  _createErrorHandler(formEl, deferred, options) {
+    return function(error, t, m) {
+      if (error.responseText) {
+        if (window.console) {
+          console.error(error.responseText);
         } else {
-          console.error(error);
+          alert(error.responseText);
         }
-        if (formEl && options.disableInput) {
-          return FormUtils.enableInputs(formEl);
-        }
-      };
-    })(this);
-  };
+      } else {
+        console.error(error);
+      }
+      if (formEl && options.disableInput) {
+        return FormUtils.enableInputs(formEl);
+      }
+    }
+  }
 
 
   /* 
@@ -398,91 +417,95 @@ var Action = (function() {
               hide the form if success
     */
 
-  Action.prototype.run = function(actionName, args, arg1, arg2) {
+  run(actionName:string, args, arg1 = null, arg2 = null) : JQueryDeferred<any> {
     var cb, payload;
     if (typeof arg1 === "function") {
       cb = arg1;
     } else if (typeof arg1 === "object") {
-      this.options = $.extend(this.options, arg1);
+      this.options = jQuery.extend(this.options, arg1);
       if (typeof arg2 === "function") {
         cb = arg2;
-      }
-    }
-    if (this.options.confirm) {
-      if (!confirm(this.options.confirm)) {
-        return false;
       }
     }
 
     var deferred = jQuery.Deferred();
 
-    var doSubmit = (function(_this) {
+    if (this.options.confirm) {
+      if (!confirm(this.options.confirm)) {
+        // FIXME: pass unconfirm message
+        deferred.reject();
+        return deferred;
+      }
+    }
+
+
       /**
        * @param {object} payload
        * @return {jQuery.Deferred}
        */
-      return function(payload) {
-        var errorHandler, formEl, postUrl, successHandler;
-        if (_this.options.onSubmit) {
-          _this.options.onSubmit();
+    var doSubmit = (payload): JQueryDeferred<any> => {
+      var errorHandler, formEl, postUrl, successHandler;
+      if (this.options.onSubmit) {
+        this.options.onSubmit();
+      }
+      formEl = this.form();
+      if (formEl) {
+        if (this.options.disableInput) {
+          FormUtils.disableInputs(formEl);
         }
-        formEl = _this.form();
-        if (formEl) {
-          if (_this.options.disableInput) {
-            FormUtils.disableInputs(formEl);
-          }
-        }
-        if (formEl && formEl.attr('action')) {
-          postUrl = formEl.attr('action');
-        } else if (_this.actionPath) {
-          postUrl = _this.actionPath;
-        } else if (Action.ajaxOptions.url) {
-          postUrl = Action.ajaxOptions.url;
-        } else {
-          postUrl = window.location.pathname;
-        }
-        errorHandler = _this._createErrorHandler(formEl, deferred, _this.options);
-        successHandler = _this._createSuccessHandler(formEl, deferred, _this.options, cb);
-        jQuery.ajax($.extend(Action.ajaxOptions, {
-          "url": postUrl,
-          "data": payload,
-          "error": errorHandler,
-          "success": successHandler
-        }));
-        return deferred;
-      };
-    })(this);
+      }
+      if (formEl && formEl.attr('action')) {
+        postUrl = formEl.attr('action');
+      } else if (this.actionPath) {
+        postUrl = this.actionPath;
+      } else if (Action.ajaxOptions.url) {
+        postUrl = Action.ajaxOptions.url;
+      } else {
+        postUrl = window.location.pathname;
+      }
+      errorHandler = this._createErrorHandler(formEl, deferred, this.options);
+      successHandler = this._createSuccessHandler(formEl, deferred, this.options, cb);
+      jQuery.ajax(jQuery.extend(Action.ajaxOptions, {
+        "url": postUrl,
+        "data": payload,
+        "error": errorHandler,
+        "success": successHandler
+      }));
+      return deferred;
+    }
     payload = {
       "__action": actionName,
       "__ajax_request": 1
     };
-    payload = $.extend(payload, args);
+    payload = jQuery.extend(payload, args);
     if (!payload.__csrf_token) {
       if (typeof Cookies !== "undefined") {
         payload.__csrf_token = Cookies.get('csrf');
       }
     }
     return doSubmit(payload);
-  };
+  }
 
 
-  /*
-    * submit:
-    * submit( option , callback )
-    * submit( callback )
-    */
-
-  Action.prototype.submit = function(arg1, arg2) {
+  /**
+   * submit the action
+   *
+   * submit(option , callback )
+   * submit(callback )
+   *
+   */
+  submit(arg1 = null, arg2 = null):boolean {
     var $form, cb, data, ret, that;
     that = this;
     if (typeof arg1 === "object") {
-      this.options = $.extend(this.options, arg1);
+      this.options = jQuery.extend(this.options, arg1);
       if (arg2 && typeof arg2 === "function") {
         cb = arg2;
       }
     } else if (typeof arg1 === "function") {
       cb = arg1;
     }
+
     $form = this.form();
     data = this.getFormData();
     if (this.options.beforeSubmit) {
@@ -491,16 +514,16 @@ var Action = (function() {
         return false;
       }
     }
-    $(this).trigger('action.before_submit', [data]);
+    jQuery(this).trigger('action.before_submit', [data]);
     if ($form.find("input[type=file]").get(0) && $form.find('input[type=file]').parents('form').get(0) === $form.get(0)) {
-      return this.submitWithAIM(data, cb);
-    } else {
-      return this.run(data.action, data);
+      this.submitWithAIM(data, cb);
+      return false;
     }
-    return true;
-  };
+    this.run(data.action, data);
+    return false;
+  }
 
-  Action.prototype.submitWithAIM = function(data, cb) {
+  submitWithAIM(data, cb) : JQueryDeferred<any> {
     var deferred = jQuery.Deferred();
     var $form, actionName, errorHandler, successHandler, that;
     $form = this.form();
@@ -523,7 +546,7 @@ var Action = (function() {
     AIM.submit($form.get(0), {
       onStart: function() {
         if (that.options.beforeUpload) {
-          that.options.beforeUpload.call(that, $form, json);
+          that.options.beforeUpload.call(that, $form);
         }
         return true;
       },
@@ -543,14 +566,12 @@ var Action = (function() {
       }
     });
     return deferred;
-  };
+  }
 
-
-  /*
-  (Action object).submitWith( args, ... )
-    */
-
-  Action.prototype.submitWith = function(extendData, arg1, arg2) {
+  /**
+   * Submit the current form with extended form data.
+   */
+  submitWith(extendData, arg1 = null, arg2 = null) {
     var cb, data, options;
     options = {};
     if (typeof arg1 === "object") {
@@ -561,30 +582,40 @@ var Action = (function() {
     } else if (typeof arg1 === "function") {
       cb = arg1;
     }
-    data = $.extend(this.getFormData(), extendData);
+    data = jQuery.extend(this.getFormData(), extendData);
     return this.run(data.action, data, options, cb);
-  };
+  }
 
-  return Action;
 
-})();
 
-Action._globalPlugins = [];
+  /**
+   * Construct an Action from form elements
+   */
+  static form(formsel, opts = {}) : Action {
+    return new Action(formsel, opts);
+  }
 
-Action.form = function(formsel, opts) {
-  return new Action(formsel, opts || {});
-};
+  static plug(plugin, opts = {}) {
+    return Action._globalPlugins.push({
+      plugin: plugin,
+      options: opts
+    });
+  }
 
-Action.plug = function(plugin, opts) {
-  return Action._globalPlugins.push({
-    plugin: plugin,
-    options: opts
-  });
-};
+  static reset() {
+    return Action._globalPlugins = [];
+  }
 
-Action.reset = function() {
-  return Action._globalPlugins = [];
-};
+}
+
+
+
+
+
+
+
+
+
 
 
 export default Action;

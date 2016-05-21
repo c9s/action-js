@@ -4,21 +4,23 @@ import ActionCsrfToken from "./action-csrf-token";
 import ActionDevLoader from "./action-dev-loader";
 import FormUtils from "./formutils";
 
-window.FormUtils = FormUtils;
-window.ActionPlugin = ActionPlugin;
-window.Action = Action;
+(<any>window).FormUtils = FormUtils;
+(<any>window).ActionPlugin = ActionPlugin;
+(<any>window).Action = Action;
 
-window.submitActionWith = function(f, extendData, arg1, arg2) {
-  return Action.form(f).submitWith(extendData, arg1, arg2);
+(<any>window).submitActionWith = function(f, extendData, arg1 = null, arg2 = null) {
+  var a = Action.form(f);
+  return a.submitWith(extendData, arg1, arg2);
 };
 
-window.submitAction = function(f, arg1, arg2) {
-  return Action.form(f).submit(arg1, arg2);
+(<any>window).submitAction = function(f, arg1 = null, arg2 = null) {
+  var a = Action.form(f);
+  a.submit(arg1, arg2);
 };
 
-window.runAction = function(actionName, args, arg1, arg2) {
+(<any>window).runAction = function(actionName:string, args, arg1, arg2) {
   var a = new Action;
-  var funcargs = [actionName];
+  var funcargs:Array<any> = [actionName];
   if (typeof args === "function") {
     funcargs.push({});
     funcargs.push(args); // the callback
