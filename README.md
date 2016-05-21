@@ -3,6 +3,18 @@ Action JS
 
 The powerful javascript library for connecting form components with backend protocols.
 
+## Build
+
+    composer install
+    typings install
+    npm install
+    webpack
+
+## Development
+
+    webpack-dev-server --config webpack.server.config.js
+
+Setup `action-js` virtual host for running ActionKit in PHP.
 
 ## Backlog: TypeScript Migration Steps
 
