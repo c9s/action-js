@@ -1,4 +1,4 @@
-describe('Action', function() {
+describe('Basic Action', function() {
   Action.ajaxOptions.url = "/api";
 
   describe('Creating action without form', function() {
@@ -34,7 +34,7 @@ describe('Action', function() {
       }).to.throwException();
     });
 
-    describe('#getData', function() {
+    describe('#getFormData', function() {
       it('returns isbn13', function() {
         var a = new Action(document.getElementById('formSimple'));
         expect(a.form()).to.be.an('object');
