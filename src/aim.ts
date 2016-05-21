@@ -7,15 +7,15 @@
 var AIM = {
   frame: function(c) {
     // iframe id
-    var n = 'f' + Math.floor(Math.random() * 99999);
+    var n:string = 'f' + Math.floor(Math.random() * 99999);
 
     // create a div and insert into the document
-    var d = document.createElement('DIV');
+    var d:HTMLElement = document.createElement('DIV');
     d.innerHTML = '<iframe style="display:none" id="'+n+'" name="'+n+'" onload="AIM.loaded(\''+n+'\')"></iframe>';
     document.body.appendChild(d);
 
     // get the iframe element
-    var i = document.getElementById(n);
+    var i:HTMLElement = document.getElementById(n);
     if (c && typeof(c.onComplete) == 'function') {
       // assign on complete handler on the element
       i['onComplete'] = c.onComplete;

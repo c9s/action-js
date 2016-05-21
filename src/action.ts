@@ -32,11 +32,15 @@ interface ActionPlugin {
 interface ActionSettings {
 
   plugins?: Array<ActionPlugin>;
+
   confirm?: string;
+
   disableInput?: boolean;
 
   onSubmit? ():any;
+
   beforeSubmit? ():any;
+
   beforeUpload? ():any;
 }
 
