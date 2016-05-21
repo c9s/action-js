@@ -69,68 +69,87 @@ Define ts-loader in webpack.config.js:
 
 ### Fixing Type Errors
 
-1. Export symbols to window:
+Export symbols to window:
 
-        (<any>window).myFunc
+```javascript
+(<any>window).myFunc
+```
 
-2. Migrate to ES6 class
+Migrate old prototype based class to ES6 class
 
-3. Add property names to class definition.
+Add property names to class definition.
 
-        class Action {
+```javascript
+class Action {
 
-            actionName: string;
+    actionName: string;
 
-            plugins: Array<Object>;
+    plugins: Array<Object>;
 
-            formEl: any;
+    formEl: any;
 
-            options: ActionSettings;
+    options: ActionSettings;
 
-            ...
+    ...
 
-        }
+}
+```
 
-4. Use JQueryAjaxSettings to ajaxSettings property
+Use JQueryAjaxSettings to ajaxSettings property
 
-        class ... {
-            ajaxSettings: JQueryAjaxSettings;
-        }
+```javascript
+class ... {
+    ajaxSettings: JQueryAjaxSettings;
+}
+```
 
-5. Cast element from getElementById function call to HTMLElement types, e.g.
+Cast element from getElementById function call to HTMLElement types, e.g.
 
-        var i = <HTMLIFrameElement>document.getElementById(id);
+```javascript
+var i = <HTMLIFrameElement>document.getElementById(id);
+```
 
-6. Fix AIM, the onComplete property setting. Change
+Fix AIM, the onComplete property setting. Change
 
-        i.onComplete = c.onComplete;
+```javascript
+i.onComplete = c.onComplete;
+```
 
 to:
 
-        i['onComplete'] = c.onComplete;
+```javascript
+i['onComplete'] = c.onComplete;
+```
 
-7. Functions return jQuery Deferred should be defined with `JQueryDeferred<T>` in the prototype:
+Functions return jQuery Deferred should be defined with `JQueryDeferred<T>` in the prototype:
 
-        var doSubmit = (payload): JQueryDeferred<any> => {
-            ...
-        };
+```javascript
+var doSubmit = (payload): JQueryDeferred<any> => {
+    ...
+};
+```
 
-8. Abstract config structure into interface (quality depends on how you define
+Abstract config structure into interface (quality depends on how you define
    the types):
 
-        interface ActionSettings {
-            plugins?: Array<ActionPlugin>;
+```javascript
+interface ActionSettings {
 
-            confirm?: string;
+    // optional property
+    plugins?: Array<ActionPlugin>;
 
-            disableInput?: boolean;
+    confirm?: string;
 
-            onSubmit? ():any;
+    disableInput?: boolean;
 
-            beforeSubmit? ():any;
+    // optional function
+    onSubmit? ():any;
 
-            beforeUpload? ():any;
-        }
+    beforeSubmit? ():any;
+
+    beforeUpload? ():any;
+}
+```
 
 
 
