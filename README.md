@@ -50,11 +50,11 @@ Create tsconfig.json file for typescript compiler
         "typings/index.d.ts",
         "src/entry.ts"
       ]
-   }
+    }
 
 Install `ts-loader` for webpack
 
-    npm install ts-loader
+    npm install ts-loader --save
 
 Define ts-loader in webpack.config.js:
 
@@ -71,66 +71,66 @@ Define ts-loader in webpack.config.js:
 
 1. Export symbols to window:
 
-    (<any>window).myFunc
+        (<any>window).myFunc
 
 2. Migrate to ES6 class
 
 3. Add property names to class definition.
 
-    class Action {
+        class Action {
 
-        actionName: string;
+            actionName: string;
 
-        plugins: Array<Object>;
+            plugins: Array<Object>;
 
-        formEl: any;
+            formEl: any;
 
-        options: ActionSettings;
+            options: ActionSettings;
 
-        ...
+            ...
 
-    }
+        }
 
 4. Use JQueryAjaxSettings to ajaxSettings property
 
-    class ... {
-        ajaxSettings: JQueryAjaxSettings;
-    }
+        class ... {
+            ajaxSettings: JQueryAjaxSettings;
+        }
 
 5. Cast element from getElementById function call to HTMLElement types, e.g.
 
-    var i = <HTMLIFrameElement>document.getElementById(id);
+        var i = <HTMLIFrameElement>document.getElementById(id);
 
 6. Fix AIM, the onComplete property setting. Change
 
-      i.onComplete = c.onComplete;
+        i.onComplete = c.onComplete;
 
 to:
 
-      i['onComplete'] = c.onComplete;
+        i['onComplete'] = c.onComplete;
 
 7. Functions return jQuery Deferred should be defined with `JQueryDeferred<T>` in the prototype:
 
-    var doSubmit = (payload): JQueryDeferred<any> => {
-        ...
-    };
+        var doSubmit = (payload): JQueryDeferred<any> => {
+            ...
+        };
 
 8. Abstract config structure into interface (quality depends on how you define
    the types):
 
-    interface ActionSettings {
-        plugins?: Array<ActionPlugin>;
+        interface ActionSettings {
+            plugins?: Array<ActionPlugin>;
 
-        confirm?: string;
+            confirm?: string;
 
-        disableInput?: boolean;
+            disableInput?: boolean;
 
-        onSubmit? ():any;
+            onSubmit? ():any;
 
-        beforeSubmit? ():any;
+            beforeSubmit? ():any;
 
-        beforeUpload? ():any;
-    }
+            beforeUpload? ():any;
+        }
 
 
 
