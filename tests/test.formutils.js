@@ -1,7 +1,7 @@
 describe('FormUtils', function() {
 
   describe('#findVisibleFields', function() {
-    it('returns 4 visible fields', function() {
+    it('returns 3 visible fields', function() {
       var frm = document.getElementById('formSimple');
       expect(frm).not.to.be(undefined);
       var fields = FormUtils.findVisibleFields(frm);
@@ -23,7 +23,7 @@ describe('FormUtils', function() {
   });
 
   describe('#findTextFields', function() {
-    it('returns 4 fields', function() {
+    it('returns 3 fields', function() {
       var frm = document.getElementById('formSimple');
       expect(frm).not.to.be(undefined);
       var fields = FormUtils.findTextFields(frm);
