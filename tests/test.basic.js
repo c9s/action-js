@@ -1,28 +1,48 @@
-console.clear();
 describe('Action', function() {
   Action.ajaxOptions.url = "/api";
 
-  describe('runAction Simple', function() {
-    it('should return success response in the callback', function (done) {
-      runAction('TestApp::Action::Simple', { "a": 1 }, function(resp) {
-        expect(resp.success).to.be.true;
-        done();
+  describe('Creating action without form', function() {
+    it('should be able to create without any parameter', function(done) {
+      var a = new Action;
+      done();
+    });
+  });
+
+  describe('Creating action with form', function() {
+
+
+
+    it('is able to create with a simple form', function() {
+      var a = new Action(document.getElementById('formSimple'));
+      expect(a.form()).to.be.an('object');
+    });
+
+    it('is able to set form on action', function() {
+      var a = new Action();
+      a.form(document.getElementById('formSimple'));
+      expect(a.form()).to.be.an('object');
+    });
+
+    it('throws exception on form without action signature', function() {
+      expect(function() {
+        var a = new Action(document.getElementById('formWithoutSignature'));
+      }).to.throwException();
+
+      expect(function() {
+        var a = new Action();
+        a.form(document.getElementById('formWithoutSignature'));
+      }).to.throwException();
+    });
+
+    describe('#getData', function() {
+      it('returns isbn13', function() {
+        var a = new Action(document.getElementById('formSimple'));
+        expect(a.form()).to.be.an('object');
+        var data = a.getFormData();
+        expect(data).to.not.be.empty();
+        expect(data.isbn13).to.be.equal('978-1491950296');
       });
     });
-    it('should return success response in the 2nd callback parameter', function (done) {
-      runAction('TestApp::Action::Simple', function(resp) {
-        expect(resp.success).to.be.true;
-        done();
-      });
-    });
-    it('should return a deferred object', function (done) {
-      var deferred = runAction('TestApp::Action::Simple', {}, function(resp) {
-      });
-      deferred.done(function(resp) {
-        expect(resp.success).to.be.true;
-        done();
-      });
-      expect(deferred).to.be.an('object');
-    });
+
   });
 });

@@ -3,14 +3,12 @@ namespace TestApp\Action;
 
 use ActionKit\Action;
 
-class Simple extends Action
+class Error extends Action
 {
     public function run()
     {
-        return $this->success('OK!', [ 'foo' => 3 ]);
+        return $this->error('Error!', [ 'foo' => 1, ]);
     }
 }
-
-
 
 

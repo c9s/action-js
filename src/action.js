@@ -36,19 +36,27 @@ var Action = (function() {
   };
 
   function Action(arg1, arg2) {
-    var formsel, j, len, opts, plugin, ref;
-    formsel = null;
-    opts = {};
-    if (arg1 && (arg1 instanceof jQuery || arg1.nodeType === 1 || typeof arg1 === 'string')) {
-      formsel = arg1;
-      opts = arg2 || {};
-    } else if (typeof arg1 === "object") {
-      opts = arg1 || {};
+    var form, opts = {};
+
+    if (arg1 instanceof jQuery) {
+      form = arg1;
+    } else if (arg1 instanceof HTMLFormElement) {
+      form = arg1;
+    } else if (typeof arg1 === "string") {
+      form = arg1;
+    } else if (arg1 && arg2) {
+      form = arg1;
+    } else if (!arg2 && typeof arg1 === "object") {
+      opts = arg1;
     }
-    if (formsel) {
-      this.form(formsel);
+    if (form) {
+      this.setForm(form);
+      if (arg2) {
+        opts = arg2;
+      }
     }
-    this.options = $.extend({}, opts);
+    var j, len, plugin, ref;
+    this.options = $.extend({}, opts); // copy
     if (this.options.plugins) {
       ref = this.options.plugins;
       for (j = 0, len = ref.length; j < len; j++) {
@@ -56,13 +64,14 @@ var Action = (function() {
         this.plug(plugin);
       }
     }
-    $(Action._globalPlugins).each((function(_this) {
-      return function(i, e) {
-        return _this.plug(e.plugin, e.options);
-      };
-    })(this));
+    Action._globalPlugins.forEach((p,i) => {
+      this.plug(p.plugin, p.options);
+    });
   }
 
+  /**
+   * @param {HTMLFormElement|jQuery} f
+   */
   Action.prototype.setForm = function(f) {
     this.formEl = $(f);
     this.formEl.attr('method', 'post');
@@ -70,10 +79,10 @@ var Action = (function() {
     this.formEl.data("actionObject", this);
     this.actionName = this.formEl.find('input[name=__action]').val();
     if (!this.formEl.get(0)) {
-      console.error("Action form element not found");
+      throw "action form element not found";
     }
     if (!this.actionName) {
-      cosnole.error("Action name is undefined.");
+      throw "action signature is undefined.";
     }
     if (!this.formEl.find('input[name="__ajax_request"]').get(0)) {
       this.formEl.append($('<input>').attr({
@@ -108,12 +117,9 @@ var Action = (function() {
     return this.formEl;
   };
 
-  Action.prototype.log = function() {
-    if (window.console && window.console.log && console.log.apply) {
-      return console.log.apply(console, arguments);
-    }
-  };
-
+  /**
+   * add plugin
+   */
   Action.prototype.plug = function(plugin, options) {
     var p;
     if (typeof plugin === 'function') {
@@ -127,20 +133,31 @@ var Action = (function() {
     }
   };
 
+  /**
+   * set action path
+   */
   Action.prototype.setPath = function(path) {
     return this.actionPath = path;
   };
 
-  Action.prototype.getData = function(f) {
+  /**
+   * get the current data from the form
+   */
+  Action.prototype.getFormData = function() {
     var data, isIndexed, that;
     that = this;
     data = {};
-    isIndexed = function(n) {
-      return n.indexOf('[]') > 0;
-    };
-    if (typeof tinyMCE !== 'undefined') {
+    isIndexed = (n) => n.indexOf('[]') > 0;
+
+    var f = this.form();
+    if (typeof f === "undefined") {
+      throw "form is undefined";
+    }
+    if (typeof tinyMCE !== 'undefined' && typeof tinyMCE.EditorManager !== 'undefined') {
       tinyMCE.EditorManager.triggerSave();
     }
+
+
     FormUtils.findFields(f).each(function(i, n) {
       var el, name, val;
       el = $(n);
@@ -292,10 +309,8 @@ var Action = (function() {
         deferred.resolve(resp);
       } else if (resp.error) {
         deferred.reject(resp);
-
-        console.log(resp);
         if (resp.csrf_token_mismatch || resp.csrf_token_expired || resp.csrf_token_invalid) {
-          console.error("csrf token mismatched");
+          console.error("csrf token mismatched", resp);
         }
         if (options.onError) {
           options.onError.apply(self, [resp]);
@@ -469,7 +484,7 @@ var Action = (function() {
       cb = arg1;
     }
     $form = this.form();
-    data = this.getData($form);
+    data = this.getFormData();
     if (this.options.beforeSubmit) {
       ret = this.options.beforeSubmit.call($form, data);
       if (ret === false) {
@@ -546,7 +561,7 @@ var Action = (function() {
     } else if (typeof arg1 === "function") {
       cb = arg1;
     }
-    data = $.extend(this.getData(this.form()), extendData);
+    data = $.extend(this.getFormData(), extendData);
     return this.run(data.action, data, options, cb);
   };
 

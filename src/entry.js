@@ -2,7 +2,9 @@ import Action from "./action";
 import ActionPlugin from "./action-plugin";
 import ActionCsrfToken from "./action-csrf-token";
 import ActionDevLoader from "./action-dev-loader";
+import FormUtils from "./formutils";
 
+window.FormUtils = FormUtils;
 window.ActionPlugin = ActionPlugin;
 window.Action = Action;
 
