@@ -4,6 +4,7 @@ import ActionPlugin from "./action-plugin";
 import ActionCsrfToken from "./action-csrf-token";
 import ActionDevLoader from "./action-dev-loader";
 import ActionMsgbox from "./action-msgbox";
+import ActionGrowler from "./action-growl";
 import ActionBootstrapHighlight from "./action-bootstrap-highlight";
 
 
