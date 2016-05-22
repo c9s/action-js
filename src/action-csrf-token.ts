@@ -1,3 +1,4 @@
+/// <reference path="Cookies.d.ts" />
 
 /*
 CsrfToken manager
@@ -5,11 +6,13 @@ CsrfToken manager
   ActionCsrfToken.get success: (csrfToken) ->
     ....
   */
-declare var Cookies;
 
- // ActionCsrfToken
-export default {
-  requestSession: function() {
+
+export default class ActionCsrfToken {
+
+  static _csrfToken:any;
+
+  static requestSession(): JQueryXHR {
     return jQuery.ajax({
       url: '/=/current_user/csrf',
       error: (function(_this) {
@@ -18,8 +21,9 @@ export default {
         };
       })(this)
     });
-  },
-  get: function(config) {
+  }
+
+  static get(config) {
     var cookieCsrf, csrfToken, defer, tokenExpired;
     tokenExpired = true;
     csrfToken = this._csrfToken;
@@ -36,8 +40,8 @@ export default {
       return typeof config.success === "function" ? config.success(csrfToken.hash) : void 0;
     } else {
       defer = $.Deferred();
-      this.requestSession().success((function(_this) {
-        return function(resp) {
+      this.requestSession().done(
+        (resp) => {
           if (resp.error) {
             console.error("requestSession error", resp.error);
             if (resp.redirect) {
@@ -45,15 +49,15 @@ export default {
             }
           } else {
             console.debug("csrfToken refreshed", resp);
-            _this._csrfToken = resp;
+            this._csrfToken = resp;
             if (typeof config.success === "function") {
-              config.success(_this._csrfToken.hash);
+              config.success(this._csrfToken.hash);
             }
             return defer.resolve(resp);
           }
-        };
-      })(this));
+        }
+      );
       return defer;
     }
   }
-};
+}
