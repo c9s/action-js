@@ -4,16 +4,16 @@
   a = new ActionPlugin({ ... })
   */
 import Action from "./action";
-var ActionPlugin;
-export default ActionPlugin;
-ActionPlugin = (function() {
-  ActionPlugin.prototype.formEl = null;
 
-  ActionPlugin.prototype.action = null;
+export default class ActionPlugin {
 
-  ActionPlugin.prototype.config = {};
+  form: any;
 
-  function ActionPlugin(a1, a2) {
+  action: Action;
+
+  config: any = {};
+
+  constructor(a1, a2) {
     if (a1 && a2) {
       this.config = a2 || {};
       this.init(a1);
@@ -24,11 +24,8 @@ ActionPlugin = (function() {
     }
   }
 
-  ActionPlugin.prototype.init = function(action) {
+  init(action: Action) {
     this.action = action;
     return this.form = this.action.form();
-  };
-
-  return ActionPlugin;
-
-})();
+  }
+}

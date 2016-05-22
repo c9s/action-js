@@ -25,10 +25,6 @@ import ActionPlugin from "./action-plugin";
 import FormUtils from "./formutils";
 import AIM from "./aim";
 
-interface ActionPlugin {
-  init;
-}
-
 interface ActionSettings {
 
   plugins?: Array<ActionPlugin>;
