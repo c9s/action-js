@@ -5,28 +5,38 @@ CsrfToken manager
 
   ActionCsrfToken.get success: (csrfToken) ->
     ....
-  */
+*/
 
+
+interface CsrfTokenRequest {
+  success(hash:string);
+}
+
+interface CsrfTokenData {
+  hash: string;
+  timestamp: number;
+  ttl: number;
+}
 
 export default class ActionCsrfToken {
 
-  static _csrfToken:any;
+  static csrfToken:CsrfTokenData;
 
   static requestSession(): JQueryXHR {
     return jQuery.ajax({
-      url: '/=/current_user/csrf',
-      error: (function(_this) {
-        return function(resp) {
-          return console.error(resp);
-        };
-      })(this)
+      "url": '/=/current_user/csrf',
+      "error": (resp) => { console.error(resp); }
     });
   }
 
-  static get(config) {
-    var cookieCsrf, csrfToken, defer, tokenExpired;
+
+  /**
+   * the config.success defines the callback for csrf token response
+   */
+  static get(config:CsrfTokenRequest) {
+    var cookieCsrf, tokenExpired;
     tokenExpired = true;
-    csrfToken = this._csrfToken;
+    var csrfToken = ActionCsrfToken.csrfToken;
     if (typeof Cookies !== "undefined") {
       cookieCsrf = Cookies.get('csrf');
     }
@@ -38,28 +48,28 @@ export default class ActionCsrfToken {
     }
     if (!tokenExpired) {
       return typeof config.success === "function" ? config.success(csrfToken.hash) : void 0;
-    } else {
-      defer = $.Deferred();
-
-      // TODO: handle fail(), always() as well.
-      this.requestSession().done(
-        (resp) => {
-          if (resp.error) {
-            console.error("requestSession error", resp.error);
-            if (resp.redirect) {
-              return window.location = resp.redirect;
-            }
-          } else {
-            console.debug("csrfToken refreshed", resp);
-            this._csrfToken = resp;
-            if (typeof config.success === "function") {
-              config.success(this._csrfToken.hash);
-            }
-            return defer.resolve(resp);
-          }
-        }
-      );
-      return defer;
     }
+
+    var defer = $.Deferred();
+
+    // TODO: handle fail(), always() as well.
+    ActionCsrfToken.requestSession().done(
+      (resp) => {
+        if (resp.error) {
+          console.error("requestSession error", resp.error);
+          if (resp.redirect) {
+            return window.location = resp.redirect;
+          }
+        } else {
+          console.debug("csrfToken refreshed", resp);
+          ActionCsrfToken.csrfToken = resp;
+          if (typeof config.success === "function") {
+            config.success(ActionCsrfToken.csrfToken.hash);
+          }
+          defer.resolve(resp);
+        }
+      }
+    );
+    return defer;
   }
 }
