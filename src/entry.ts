@@ -1,8 +1,11 @@
+import FormUtils from "./formutils";
 import Action from "./action";
 import ActionPlugin from "./action-plugin";
 import ActionCsrfToken from "./action-csrf-token";
 import ActionDevLoader from "./action-dev-loader";
-import FormUtils from "./formutils";
+import ActionMsgbox from "./action-msgbox";
+import ActionBootstrapHighlight from "./action-bootstrap-highlight";
+
 
 (<any>window).FormUtils = FormUtils;
 (<any>window).ActionPlugin = ActionPlugin;

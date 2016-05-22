@@ -309,7 +309,7 @@ class Action {
     $self = jQuery(self);
     return function(resp) {
       var debugDiv, ret;
-      $self.trigger('action.on_result', [resp]);
+      $self.trigger('action.result', [resp]);
       if (formEl && options.disableInput) {
         FormUtils.enableInputs(formEl);
       }
