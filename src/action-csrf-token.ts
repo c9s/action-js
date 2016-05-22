@@ -40,6 +40,8 @@ export default class ActionCsrfToken {
       return typeof config.success === "function" ? config.success(csrfToken.hash) : void 0;
     } else {
       defer = $.Deferred();
+
+      // TODO: handle fail(), always() as well.
       this.requestSession().done(
         (resp) => {
           if (resp.error) {
