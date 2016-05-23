@@ -21,8 +21,8 @@ declare var Cookies;
 declare var tinyMCE;
 
 import "jquery";
-import ActionPlugin from "./action-plugin";
-import FormUtils from "./formutils";
+import ActionPlugin from "./ActionPlugin";
+import FormUtils from "./FormUtils";
 import AIM from "./aim";
 
 interface ActionSettings {

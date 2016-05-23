@@ -1,6 +1,6 @@
 import "jquery";
-import ActionPlugin from "./action-plugin";
-import Action from "./action";
+import Action from "./Action";
+import ActionPlugin from "./ActionPlugin";
 
 export default class ActionBootstrapHighlight extends ActionPlugin {
 

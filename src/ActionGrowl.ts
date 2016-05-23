@@ -1,7 +1,7 @@
 /// <reference path="jGrowl.d.ts" />
 
-import Action from "./action";
-import ActionPlugin from "./action-plugin";
+import Action from "./Action";
+import ActionPlugin from "./ActionPlugin";
 
 export default class ActionGrowler extends ActionPlugin {
 

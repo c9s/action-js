@@ -1,11 +1,11 @@
-import FormUtils from "./formutils";
-import Action from "./action";
-import ActionPlugin from "./action-plugin";
-import ActionCsrfToken from "./action-csrf-token";
-import ActionDevLoader from "./action-dev-loader";
-import ActionMsgbox from "./action-msgbox";
-import ActionGrowler from "./action-growl";
-import ActionBootstrapHighlight from "./action-bootstrap-highlight";
+import FormUtils from "./FormUtils";
+import Action from "./Action";
+import ActionPlugin from "./ActionPlugin";
+import ActionCsrfToken from "./ActionCsrfToken";
+import ActionDevLoader from "./ActionDevLoader";
+import ActionMsgbox from "./ActionMsgbox";
+import ActionGrowler from "./ActionGrowl";
+import ActionBootstrapHighlight from "./ActionBootstrapHighlight";
 
 
 (<any>window).FormUtils = FormUtils;

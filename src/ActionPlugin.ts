@@ -3,7 +3,7 @@
   a = new ActionPlugin(action)
   a = new ActionPlugin({ ... })
   */
-import Action from "./action";
+import Action from "./Action";
 
 export default class ActionPlugin {
 
