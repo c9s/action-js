@@ -58,7 +58,7 @@ export default class ActionCsrfToken {
         if (resp.error) {
           console.error("requestSession error", resp.error);
           if (resp.redirect) {
-            return window.location = resp.redirect;
+            window.location.href = resp.redirect;
           }
         } else {
           console.debug("csrfToken refreshed", resp);

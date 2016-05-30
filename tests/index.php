@@ -18,7 +18,7 @@ require dirname(__DIR__) . "/vendor/autoload.php";
   <script type="text/javascript" src="assets/expect.js-0.3.1/index.js"></script>
   <script type="text/javascript" src="assets/mocha.js"></script>
 
-  <script type="text/javascript" src="../action.bundle.js"> </script>
+  <script type="text/javascript" src="../action.js"> </script>
   <script>mocha.setup('bdd')</script>
   <script src="test.formutils.js"></script>
   <script src="test.basic.js"></script>

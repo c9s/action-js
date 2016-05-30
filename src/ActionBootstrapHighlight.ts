@@ -1,4 +1,3 @@
-import "jquery";
 import Action from "./Action";
 import ActionPlugin from "./ActionPlugin";
 

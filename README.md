@@ -12,9 +12,11 @@ The powerful javascript library for connecting form components with backend prot
 
 ## Development
 
+Start webpack-dev-server
+
     webpack-dev-server --config webpack.server.config.js
 
-Setup `action-js` virtual host for running ActionKit in PHP.
+Setup `action-js.dev` virtual host for running ActionKit in PHP.
 
 ## Backlog: TypeScript Migration Steps
 
@@ -23,10 +25,12 @@ Setup `action-js` virtual host for running ActionKit in PHP.
 Install typescript
 
     sudo npm install typescript -g
+    sudo npm link typescript
 
 Install typings (tsd was deprecated)
 
     sudo npm install typings -g
+    sudo link typings
 
 Install types for jquery, mocha
 
@@ -54,7 +58,7 @@ Create tsconfig.json file for typescript compiler
 
 Install `ts-loader` for webpack
 
-    npm install ts-loader --save
+    npm install ts-loader --save-dev
 
 Define ts-loader in webpack.config.js:
 

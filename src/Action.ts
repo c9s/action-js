@@ -23,7 +23,8 @@ declare var tinyMCE;
 import "jquery";
 import ActionPlugin from "./ActionPlugin";
 import FormUtils from "./FormUtils";
-import AIM from "./aim";
+import AIM from "./AIM";
+import assign = require("object-assign");
 
 interface ActionSettings {
 
@@ -40,7 +41,7 @@ interface ActionSettings {
   beforeUpload? ():any;
 }
 
-class Action {
+export default class Action {
 
   actionName: string;
 
@@ -86,7 +87,7 @@ class Action {
         opts = arg2;
       }
     }
-    this.options = jQuery.extend({}, opts); // copy
+    this.options = assign({}, opts); // copy
     if (this.options.plugins) {
       this.options.plugins.forEach((p) => {
         this.plug(p);
@@ -250,15 +251,15 @@ class Action {
   _processLocationOptions(options, resp) {
     if (options.reload) {
       return setTimeout((function() {
-        return window.location.reload();
+        window.location.reload();
       }), options.delay || 0);
     } else if (options.redirect) {
       return setTimeout((function() {
-        return window.location = options.redirect;
+        window.location.href = options.redirect;
       }), options.delay || 0);
     } else if (resp.redirect) {
       return setTimeout((function() {
-        return window.location = resp.redirect;
+        window.location.href = resp.redirect;
       }), resp.delay * 1000 || options.delay || 0);
     }
   }
@@ -618,4 +619,3 @@ class Action {
 
 
 
-export default Action;
