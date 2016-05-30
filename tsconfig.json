@@ -1,8 +1,11 @@
  {
   "compilerOptions": {
     "target": "es5",
+    "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "outDir": "build/"
+    "module": "commonjs",
+    "allowJs": true,
+    "outDir": "build"
   },
   "exclude": ["node_modules"],
   "files": [
