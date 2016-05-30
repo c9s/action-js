@@ -3,25 +3,33 @@ var webpack = require("webpack");
 var webpackDevServer = require("webpack-dev-server");
 var nodeModulesPath = path.resolve(__dirname, 'node_modules');
 module.exports = {
-  entry: "./src/entry.ts",
-  output: {
-    path: __dirname,
-    filename: "action.bundle.js"
+  'entry': {
+    'action': ["./src/entry.ts"],
+    'action-test': ["./src/entry.ts"],
   },
-  module: {
-    loaders: [{
-        test: /\.(js|jsx)$/,
-        loaders: ['babel'],
+  'output': {
+    'path': __dirname,
+    'filename': '[name].js'
+  },
+  'module': {
+    'loaders': [
+      { test: /\.tsx?$/,
+        loader: 'ts-loader'
+      },
+      { test: /\.jsx?$/,
+        loader: 'babel-loader',
         exclude: [nodeModulesPath]
-    }, { test: /\.tsx?$/, loader: 'ts-loader' }],
+      },
+    ]
   },
-  externals: {
+  'externals': {
     // don't bundle the 'react' npm package with our bundle.js
     // but get it from a global 'React' variable
     'jquery': 'jQuery',
     'react': 'React'
   },
-  resolve: {
-    extensions: ['', '.js', '.jsx', '.ts', '.tsx']
+  'resolve': {
+    'root': [path.resolve('./src')],
+    'extensions': ['', '.ts', '.tsx', '.js', '.jsx']
   }
 };

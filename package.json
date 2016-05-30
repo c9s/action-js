@@ -11,10 +11,6 @@
     "babel-core": "^5.8.38",
     "babel-eslint": "^3.1.30",
     "babel-loader": "^5.4.0",
-    "babel-plugin-transform-object-assign": "^6.8.0",
-    "babel-polyfill": "^6.9.0",
-    "babel-preset-es2015": "^6.9.0",
-    "babel-preset-stage-0": "^6.5.0",
     "babel-runtime": "^5.8.38",
     "classnames": "^2.2.5",
     "css-loader": "^0.14.5",
@@ -31,14 +27,17 @@
     "react": "^15.0.2",
     "react-hot-loader": "^1.3.0",
     "react-proxy-loader": "^0.3.4",
-    "typescript": "^1.8.10",
     "object-assign": "^4.0.1",
-    "ts-loader": "^0.8.2",
     "typedoc": "^0.3.12",
     "uglify-loader": "^1.3.0",
     "webpack": "^1.13.1",
     "webpack-closure-compiler": "^2.0.2",
     "webpack-dev-server": "^1.14.1",
     "webpack-stream": "^3.2.0"
+  },
+  "dependencies": {
+    "ts-loader": "^0.8.2",
+    "typescript": "^1.8.10",
+    "typings": "^1.0.4"
   }
 }
