@@ -5,7 +5,7 @@ import ActionCsrfToken from "./src/ActionCsrfToken";
 import ActionDevLoader from "./src/ActionDevLoader";
 import ActionMsgbox from "./src/ActionMsgbox";
 import ActionGrowler from "./src/ActionGrowl";
-import ActionBootstrapHighlight from "ActionBootstrapHighlight";
+import ActionBootstrapHighlight from "./src/ActionBootstrapHighlight";
 
 window['FormUtils'] = FormUtils;
 window['ActionPlugin'] = ActionPlugin;
