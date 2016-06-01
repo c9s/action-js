@@ -148,9 +148,15 @@ export default class Action {
   /**
    * add plugin
    */
-  plug(plugin:ActionPlugin) {
-    plugin.init(this);
-    this.plugins.push(plugin);
+  plug(plugin, config = null) {
+    if (plugin instanceof ActionPlugin) {
+      plugin.init(this);
+      this.plugins.push(plugin);
+    } else if (typeof plugin === "function") {
+      var instance = new plugin(config);
+      instance.init(this);
+      this.plugins.push(instance);
+    }
   }
 
   /**

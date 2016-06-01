@@ -6,8 +6,11 @@ import ActionDevLoader from "./src/ActionDevLoader";
 import ActionMsgbox from "./src/ActionMsgbox";
 import ActionGrowler from "./src/ActionGrowl";
 import ActionBootstrapHighlight from "./src/ActionBootstrapHighlight";
+import BootstrapFormHighlight from "./src/BootstrapFormHighlight";
 
+window['ActionMsgbox'] = ActionMsgbox;
 window['FormUtils'] = FormUtils;
+window['BootstrapFormHighlight'] = BootstrapFormHighlight;
 window['ActionPlugin'] = ActionPlugin;
 window['ActionBootstrapHighlight'] = ActionBootstrapHighlight;
 window['ActionGrowler'] = ActionGrowler;

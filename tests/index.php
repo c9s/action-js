@@ -23,6 +23,7 @@ require dirname(__DIR__) . "/vendor/autoload.php";
   <script src="test.formutils.js"></script>
   <script src="test.basic.js"></script>
   <script src="test.server.js"></script>
+  <script src="test.plugin.js"></script>
   <script>
     mocha.checkLeaks();
     mocha.globals(['jQuery']);

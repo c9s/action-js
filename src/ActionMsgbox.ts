@@ -5,8 +5,10 @@ import ActionPlugin from "./ActionPlugin";
 
 export default class ActionMsgbox extends ActionPlugin {
 
+  // class name
   cls: string;
 
+  // contains class name
   ccls: string;
 
   container: JQuery;

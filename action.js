@@ -54,10 +54,20 @@
 	"use strict";
 	var FormUtils_1 = __webpack_require__(2);
 	var Action_1 = __webpack_require__(4);
-	var ActionPlugin_1 = __webpack_require__(7);
-	window.FormUtils = FormUtils_1["default"];
-	window.ActionPlugin = ActionPlugin_1["default"];
-	window.Action = Action_1["default"];
+	var ActionPlugin_1 = __webpack_require__(5);
+	var ActionCsrfToken_1 = __webpack_require__(8);
+	var ActionMsgbox_1 = __webpack_require__(9);
+	var ActionGrowl_1 = __webpack_require__(10);
+	var ActionBootstrapHighlight_1 = __webpack_require__(11);
+	var BootstrapFormHighlight_1 = __webpack_require__(12);
+	window['ActionMsgbox'] = ActionMsgbox_1["default"];
+	window['FormUtils'] = FormUtils_1["default"];
+	window['BootstrapFormHighlight'] = BootstrapFormHighlight_1["default"];
+	window['ActionPlugin'] = ActionPlugin_1["default"];
+	window['ActionBootstrapHighlight'] = ActionBootstrapHighlight_1["default"];
+	window['ActionGrowler'] = ActionGrowl_1["default"];
+	window['ActionCsrfToken'] = ActionCsrfToken_1["default"];
+	window['Action'] = Action_1["default"];
 	window.submitActionWith = function (f, extendData, arg1, arg2) {
 	    if (arg1 === void 0) { arg1 = null; }
 	    if (arg2 === void 0) { arg2 = null; }
@@ -129,9 +139,10 @@
 
 	"use strict";
 	__webpack_require__(3);
+	var ActionPlugin_1 = __webpack_require__(5);
 	var FormUtils_1 = __webpack_require__(2);
-	var AIM_1 = __webpack_require__(5);
-	var assign = __webpack_require__(6);
+	var AIM_1 = __webpack_require__(6);
+	var assign = __webpack_require__(7);
 	var Action = (function () {
 	    function Action(arg1, arg2) {
 	        var _this = this;
@@ -223,9 +234,17 @@
 	    /**
 	     * add plugin
 	     */
-	    Action.prototype.plug = function (plugin) {
-	        plugin.init(this);
-	        this.plugins.push(plugin);
+	    Action.prototype.plug = function (plugin, config) {
+	        if (config === void 0) { config = null; }
+	        if (plugin instanceof ActionPlugin_1["default"]) {
+	            plugin.init(this);
+	            this.plugins.push(plugin);
+	        }
+	        else if (typeof plugin === "function") {
+	            var instance = new plugin(config);
+	            instance.init(this);
+	            this.plugins.push(instance);
+	        }
 	    };
 	    /**
 	     * set action path
@@ -696,6 +715,41 @@
 
 /***/ },
 /* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	/*
+	  a = new ActionPlugin(action,{ ...options...  })
+	  a = new ActionPlugin(action)
+	  a = new ActionPlugin({ ... })
+	  */
+	var Action_1 = __webpack_require__(4);
+	var ActionPlugin = (function () {
+	    function ActionPlugin(a1, a2) {
+	        this.config = {};
+	        if (a1 && a2) {
+	            this.config = a2 || {};
+	            this.init(a1);
+	        }
+	        else if (a1 instanceof Action_1["default"]) {
+	            this.init(a1);
+	        }
+	        else if (typeof a1 === 'object') {
+	            this.config = a1;
+	        }
+	    }
+	    ActionPlugin.prototype.init = function (action) {
+	        this.action = action;
+	        return this.form = this.action.form();
+	    };
+	    return ActionPlugin;
+	}());
+	exports.__esModule = true;
+	exports["default"] = ActionPlugin;
+
+
+/***/ },
+/* 6 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -770,7 +824,7 @@
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -859,38 +913,363 @@
 
 
 /***/ },
-/* 7 */
+/* 8 */
+/***/ function(module, exports) {
+
+	/// <reference path="Cookies.d.ts" />
+	"use strict";
+	var ActionCsrfToken = (function () {
+	    function ActionCsrfToken() {
+	    }
+	    ActionCsrfToken.requestSession = function () {
+	        return jQuery.ajax({
+	            "url": '/=/current_user/csrf',
+	            "error": function (resp) { console.error(resp); }
+	        });
+	    };
+	    /**
+	     * the config.success defines the callback for csrf token response
+	     */
+	    ActionCsrfToken.get = function (config) {
+	        var cookieCsrf, tokenExpired;
+	        tokenExpired = true;
+	        var csrfToken = ActionCsrfToken.csrfToken;
+	        if (typeof Cookies !== "undefined") {
+	            cookieCsrf = Cookies.get('csrf');
+	        }
+	        if (cookieCsrf) {
+	            return typeof config.success === "function" ? config.success(cookieCsrf) : void 0;
+	        }
+	        if (csrfToken) {
+	            tokenExpired = (new Date).getTime() > (csrfToken.timestamp + csrfToken.ttl) * 1000;
+	        }
+	        if (!tokenExpired) {
+	            return typeof config.success === "function" ? config.success(csrfToken.hash) : void 0;
+	        }
+	        var defer = $.Deferred();
+	        // TODO: handle fail(), always() as well.
+	        ActionCsrfToken.requestSession().done(function (resp) {
+	            if (resp.error) {
+	                console.error("requestSession error", resp.error);
+	                if (resp.redirect) {
+	                    window.location.href = resp.redirect;
+	                }
+	            }
+	            else {
+	                console.debug("csrfToken refreshed", resp);
+	                ActionCsrfToken.csrfToken = resp;
+	                if (typeof config.success === "function") {
+	                    config.success(ActionCsrfToken.csrfToken.hash);
+	                }
+	                defer.resolve(resp);
+	            }
+	        });
+	        return defer;
+	    };
+	    return ActionCsrfToken;
+	}());
+	exports.__esModule = true;
+	exports["default"] = ActionCsrfToken;
+
+
+/***/ },
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	/*
-	  a = new ActionPlugin(action,{ ...options...  })
-	  a = new ActionPlugin(action)
-	  a = new ActionPlugin({ ... })
-	  */
-	var Action_1 = __webpack_require__(4);
-	var ActionPlugin = (function () {
-	    function ActionPlugin(a1, a2) {
-	        this.config = {};
-	        if (a1 && a2) {
-	            this.config = a2 || {};
-	            this.init(a1);
-	        }
-	        else if (a1 instanceof Action_1["default"]) {
-	            this.init(a1);
-	        }
-	        else if (typeof a1 === 'object') {
-	            this.config = a1;
-	        }
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	/// <reference path="jquery-scrollTo.d.ts" />
+	__webpack_require__(3);
+	var ActionPlugin_1 = __webpack_require__(5);
+	var ActionMsgbox = (function (_super) {
+	    __extends(ActionMsgbox, _super);
+	    function ActionMsgbox() {
+	        _super.apply(this, arguments);
 	    }
-	    ActionPlugin.prototype.init = function (action) {
+	    ActionMsgbox.prototype.init = function (action) {
+	        var _this = this;
+	        var actionId = action.actionName.replace(/::/g, '-');
+	        var self = this;
 	        this.action = action;
-	        return this.form = this.action.form();
+	        this.form = action.form().get(0);
+	        this.cls = 'action-' + actionId + '-result';
+	        this.ccls = 'action-result';
+	        if (this.config.container) {
+	            this.container = jQuery(this.config.container);
+	        }
+	        else {
+	            this.container = this.form.find('.' + this.cls);
+	            if (!this.container.get(0)) {
+	                this.container = jQuery('<div/>').addClass(this.cls).addClass(this.ccls);
+	                this.form.prepend(this.container);
+	            }
+	        }
+	        if (typeof this.config.clear !== "undefined") {
+	            if (this.config.clear) {
+	                this.container.empty().hide();
+	            }
+	        }
+	        else {
+	            this.container.empty().hide();
+	        }
+	        $(this.action).on('action.result', function (ev, resp) {
+	            var $box, $close, $desc, $icon, $text, d, i, len, msg, ref, results;
+	            $box = $('<div/>').addClass('message');
+	            $text = $('<div/>').addClass('text');
+	            $desc = $('<div/>').addClass('desc');
+	            $icon = $('<i/>').css({
+	                float: 'left'
+	            }).addClass('icon fa');
+	            $close = $('<span/>').css({
+	                position: 'absolute',
+	                top: 6,
+	                right: 6
+	            }).addClass('fa fa-times-circle').click(function () {
+	                return $box.fadeOut('slow', function () {
+	                    return $box.remove();
+	                });
+	            });
+	            $box.append($icon).append($text);
+	            if (resp.desc) {
+	                $box.append($desc);
+	            }
+	            $box.append($close);
+	            if (resp.success) {
+	                $box.addClass('success');
+	                $icon.addClass('fa-check-circle');
+	                $text.text(resp.message);
+	                self.container.html($box).fadeIn('fast');
+	            }
+	            else if (resp.error) {
+	                self.container.empty();
+	                $box.addClass('error');
+	                $icon.addClass('fa-warning');
+	                $text.text(resp.message);
+	                self.container.html($box).fadeIn('fast');
+	            }
+	            if (resp.validations) {
+	                ref = self.extErrorMsgs(resp);
+	                results = [];
+	                for (i = 0, len = ref.length; i < len; i++) {
+	                    msg = ref[i];
+	                    d = $('<div/>').addClass('error-message').html(msg);
+	                    results.push($desc.append(d));
+	                }
+	                return results;
+	            }
+	        });
+	        $(action).on('action.before_submit', function () {
+	            _this.wait();
+	        });
 	    };
-	    return ActionPlugin;
+	    ActionMsgbox.prototype.wait = function () {
+	        var _this = this;
+	        var $box, $close, $desc, $icon, $text, scrollOffset;
+	        $box = $('<div/>').addClass('message');
+	        $text = $('<div/>').addClass('text');
+	        $desc = $('<div/>').addClass('desc');
+	        $icon = $('<i/>').css({
+	            float: 'left'
+	        }).addClass('icon icon-spinner icon-spin');
+	        $close = $('<span/>').css({
+	            position: 'absolute',
+	            top: 6,
+	            right: 6
+	        }).addClass('fa fa-times-circle').click(function () {
+	            $box.fadeOut('slow', function () {
+	                $box.remove();
+	            });
+	        });
+	        $box.append($icon).append($text).append($desc).append($close);
+	        $box.addClass('waiting');
+	        $text.text("Progressing");
+	        this.container.html($box).fadeIn('fast');
+	        if (!this.config.disableScroll && typeof (jQuery.scrollTo) !== "undefined" && window.pageYOffset > 20) {
+	            scrollOffset = this.config.scrollOffset || -20;
+	            jQuery.scrollTo($box.get(0), 200, {
+	                offset: scrollOffset
+	            });
+	        }
+	        if (this.config.fadeOut) {
+	            setTimeout(function () {
+	                _this.container.fadeOut('fast', function () { _this.container.empty(); });
+	            }, 1200);
+	        }
+	    };
+	    ActionMsgbox.prototype.extErrorMsgs = function (resp) {
+	        var field, ref, results, v;
+	        ref = resp.validations;
+	        results = [];
+	        for (field in ref) {
+	            v = ref[field];
+	            if (!v.valid || v.error) {
+	                results.push(v.message);
+	            }
+	            else {
+	                results.push(void 0);
+	            }
+	        }
+	        return results;
+	    };
+	    return ActionMsgbox;
+	}(ActionPlugin_1["default"]));
+	exports.__esModule = true;
+	exports["default"] = ActionMsgbox;
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/// <reference path="jGrowl.d.ts" />
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var ActionPlugin_1 = __webpack_require__(5);
+	var ActionGrowler = (function (_super) {
+	    __extends(ActionGrowler, _super);
+	    function ActionGrowler() {
+	        _super.apply(this, arguments);
+	    }
+	    ActionGrowler.prototype.init = function (action) {
+	        var _this = this;
+	        $(action).on('action.result', function (ev, resp) {
+	            if (resp.success) {
+	                _this.growl(resp.message, _this.config.success);
+	            }
+	            else {
+	                _this.growl(resp.message, $.extend(_this.config.error, {
+	                    theme: 'error'
+	                }));
+	            }
+	        });
+	    };
+	    ActionGrowler.prototype.growl = function (text, opts) {
+	        jQuery.jGrowl(text, opts);
+	    };
+	    return ActionGrowler;
+	}(ActionPlugin_1["default"]));
+	exports.__esModule = true;
+	exports["default"] = ActionGrowler;
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var ActionPlugin_1 = __webpack_require__(5);
+	var BootstrapFormHighlight_1 = __webpack_require__(12);
+	var ActionBootstrapHighlight = (function (_super) {
+	    __extends(ActionBootstrapHighlight, _super);
+	    function ActionBootstrapHighlight() {
+	        _super.apply(this, arguments);
+	    }
+	    ActionBootstrapHighlight.prototype.init = function (action) {
+	        var _this = this;
+	        this.action = action;
+	        this.form = action.form().get(0);
+	        this.highligher = new BootstrapFormHighlight_1["default"](this.form);
+	        jQuery(this.action).on('action.result', function (ev, resp) {
+	            _this.highligher.cleanup();
+	            _this.highligher.fromValidations(resp.validations);
+	        });
+	    };
+	    return ActionBootstrapHighlight;
+	}(ActionPlugin_1["default"]));
+	exports.__esModule = true;
+	exports["default"] = ActionBootstrapHighlight;
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+	"use strict";
+	// different from ActionBootstrapHighlight, this class 
+	// takes form element as its constructor parameter.
+	var BootstrapFormHighlight = (function () {
+	    function BootstrapFormHighlight(form) {
+	        this.form = form;
+	    }
+	    BootstrapFormHighlight.prototype.fromValidations = function (validations) {
+	        for (var field in validations) {
+	            var validation = validations[field];
+	            if (validation.valid == false) {
+	                this.addError(field, validation.message || validation.desc);
+	            }
+	            else {
+	                this.addSuccess(field, validation.message || validation.desc);
+	            }
+	        }
+	    };
+	    BootstrapFormHighlight.prototype.addError = function (field, message) {
+	        if (this.form[field]) {
+	            var $fieldInput = $(this.form[field]);
+	            var $formGroup = $($fieldInput.parents('.form-group').get(0));
+	            $fieldInput.after($('<span aria-hidden="true"/>').addClass('glyphicon glyphicon-remove form-control-feedback'));
+	            $fieldInput.after($('<span class="sr-only"/>').text('error'));
+	            if (message) {
+	                $fieldInput.after($('<span/>').addClass('help-block help-block-validation').text(message));
+	            }
+	            $formGroup.addClass('has-error');
+	        }
+	    };
+	    BootstrapFormHighlight.prototype.addWarning = function (field, message) {
+	        if (this.form[field]) {
+	            var $fieldInput = $(this.form[field]);
+	            var $formGroup = $($fieldInput.parents('.form-group').get(0));
+	            $fieldInput.after($('<span aria-hidden="true"/>').addClass('glyphicon glyphicon-warning-sign form-control-feedback'));
+	            $fieldInput.after($('<span class="sr-only"/>').text('warning'));
+	            if (message) {
+	                $fieldInput.after($('<span/>').addClass('help-block help-block-validation').text(message));
+	            }
+	            $formGroup.addClass('has-warning');
+	        }
+	    };
+	    BootstrapFormHighlight.prototype.addSuccess = function (field, message) {
+	        if (this.form[field]) {
+	            var $fieldInput = $(this.form[field]);
+	            var $formGroup = $($fieldInput.parents('.form-group').get(0));
+	            $fieldInput.after($('<span aria-hidden="true"/>').addClass('glyphicon glyphicon-warning-ok form-control-feedback'));
+	            $fieldInput.after($('<span class="sr-only"/>').text('success'));
+	            if (message) {
+	                $fieldInput.after($('<span/>').addClass('help-block help-block-validation').text(message));
+	            }
+	            $formGroup.addClass('has-success');
+	        }
+	    };
+	    BootstrapFormHighlight.prototype.cleanup = function () {
+	        for (var field in this.form) {
+	            var el = this.form[field];
+	            if (el instanceof Node && el.nodeName == "INPUT") {
+	                var $formGroup = $($(el).parents('.form-group').get(0));
+	                $formGroup.removeClass('has-error has-success has-warning');
+	                $formGroup.find('.glyphicon').remove();
+	                $formGroup.find('.sr-only').remove();
+	                $formGroup.find('.help-block-validation').remove();
+	            }
+	        }
+	    };
+	    BootstrapFormHighlight.prototype.getFirstInvalidField = function () {
+	        return jQuery(this.form).find('.has-error, .has-warning').get(0);
+	    };
+	    return BootstrapFormHighlight;
 	}());
 	exports.__esModule = true;
-	exports["default"] = ActionPlugin;
+	exports["default"] = BootstrapFormHighlight;
 
 
 /***/ }
