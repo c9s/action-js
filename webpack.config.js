@@ -4,8 +4,7 @@ var webpackDevServer = require("webpack-dev-server");
 var nodeModulesPath = path.resolve(__dirname, 'node_modules');
 module.exports = {
   'entry': {
-    'action': ["./src/entry.ts"],
-    'action-test': ["./src/entry.ts"],
+    'action': ["./entry.ts"],
   },
   'output': {
     'path': __dirname,

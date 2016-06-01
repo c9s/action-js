@@ -1,16 +1,18 @@
-import FormUtils from "./FormUtils";
-import Action from "./Action";
-import ActionPlugin from "./ActionPlugin";
-import ActionCsrfToken from "./ActionCsrfToken";
-import ActionDevLoader from "./ActionDevLoader";
-import ActionMsgbox from "./ActionMsgbox";
-import ActionGrowler from "./ActionGrowl";
-import ActionBootstrapHighlight from "./ActionBootstrapHighlight";
+import FormUtils from "./src/FormUtils";
+import Action from "./src/Action";
+import ActionPlugin from "./src/ActionPlugin";
+import ActionCsrfToken from "./src/ActionCsrfToken";
+import ActionDevLoader from "./src/ActionDevLoader";
+import ActionMsgbox from "./src/ActionMsgbox";
+import ActionGrowler from "./src/ActionGrowl";
+import ActionBootstrapHighlight from "ActionBootstrapHighlight";
 
-
-(<any>window).FormUtils = FormUtils;
-(<any>window).ActionPlugin = ActionPlugin;
-(<any>window).Action = Action;
+window['FormUtils'] = FormUtils;
+window['ActionPlugin'] = ActionPlugin;
+window['ActionBootstrapHighlight'] = ActionBootstrapHighlight;
+window['ActionGrowler'] = ActionGrowler;
+window['ActionCsrfToken'] = ActionCsrfToken;
+window['Action'] = Action;
 
 (<any>window).submitActionWith = function(f, extendData, arg1 = null, arg2 = null) {
   var a = Action.form(f);
