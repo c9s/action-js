@@ -429,7 +429,7 @@ export default class Action {
     if (typeof arg1 === "function") {
       cb = arg1;
     } else if (typeof arg1 === "object") {
-      this.options = jQuery.extend(this.options, arg1);
+      this.options = assign(this.options, arg1);
       if (typeof arg2 === "function") {
         cb = arg2;
       }
