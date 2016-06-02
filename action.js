@@ -81,6 +81,8 @@
 	    a.submit(arg1, arg2);
 	};
 	window.runAction = function (actionName, args, arg1, arg2) {
+	    if (arg1 === void 0) { arg1 = null; }
+	    if (arg2 === void 0) { arg2 = null; }
 	    var a = new Action_1["default"];
 	    var funcargs = [actionName];
 	    if (typeof args === "function") {
@@ -207,7 +209,7 @@
 	                value: 1
 	            }));
 	        }
-	        return this.formEl.submit(function () {
+	        this.formEl.submit(function () {
 	            var e, ret;
 	            try {
 	                ret = _this.submit();
@@ -458,8 +460,9 @@
 	            else {
 	                console.error(error);
 	            }
+	            deferred.reject(error);
 	            if (formEl && options.disableInput) {
-	                return FormUtils_1["default"].enableInputs(formEl);
+	                FormUtils_1["default"].enableInputs(formEl);
 	            }
 	        };
 	    };
@@ -517,7 +520,7 @@
 	            cb = arg1;
 	        }
 	        else if (typeof arg1 === "object") {
-	            this.options = jQuery.extend(this.options, arg1);
+	            this.options = assign(this.options, arg1);
 	            if (typeof arg2 === "function") {
 	                cb = arg2;
 	            }
@@ -535,7 +538,7 @@
 	         * @return {jQuery.Deferred}
 	         */
 	        var doSubmit = function (payload) {
-	            var errorHandler, formEl, postUrl, successHandler;
+	            var formEl, postUrl;
 	            if (_this.options.onSubmit) {
 	                _this.options.onSubmit();
 	            }
@@ -557,8 +560,8 @@
 	            else {
 	                postUrl = window.location.pathname;
 	            }
-	            errorHandler = _this._createErrorHandler(formEl, deferred, _this.options);
-	            successHandler = _this._createSuccessHandler(formEl, deferred, _this.options, cb);
+	            var errorHandler = _this._createErrorHandler(formEl, deferred, _this.options);
+	            var successHandler = _this._createSuccessHandler(formEl, deferred, _this.options, cb);
 	            jQuery.ajax(jQuery.extend(Action.ajaxOptions, {
 	                "url": postUrl,
 	                "data": payload,
@@ -617,19 +620,14 @@
 	        return false;
 	    };
 	    Action.prototype.submitWithAIM = function (data, cb) {
+	        var _this = this;
 	        var deferred = jQuery.Deferred();
-	        var $form, actionName, errorHandler, successHandler, that;
-	        $form = this.form();
-	        successHandler = this._createSuccessHandler($form, deferred, this.options, cb);
-	        errorHandler = this._createErrorHandler($form, deferred, this.options);
-	        if (this.options.beforeUpload) {
-	            this.options.beforeUpload.call(this, $form, data);
-	        }
+	        var actionName, that;
+	        var $form = this.form();
+	        var successHandler = this._createSuccessHandler($form, deferred, this.options, cb);
+	        var errorHandler = this._createErrorHandler($form, deferred, this.options);
 	        if (!$form || !$form.get(0)) {
 	            throw "form element not found.";
-	        }
-	        if (typeof AIM_1["default"] === "undefined") {
-	            alert("AIM is required for uploading file in ajax mode.");
 	        }
 	        actionName = $form.find('input[name="__action"]').val();
 	        if (!actionName) {
@@ -638,8 +636,8 @@
 	        that = this;
 	        AIM_1["default"].submit($form.get(0), {
 	            onStart: function () {
-	                if (that.options.beforeUpload) {
-	                    that.options.beforeUpload.call(that, $form);
+	                if (_this.options.beforeUpload) {
+	                    _this.options.beforeUpload.call(_this, $form, data);
 	                }
 	                return true;
 	            },
@@ -647,14 +645,17 @@
 	                var e, json;
 	                try {
 	                    json = JSON.parse(responseText);
-	                    successHandler(json, that.options.onUpload);
-	                    if (that.options.afterUpload) {
-	                        that.options.afterUpload.call(that, $form, json);
+	                    if (_this.options.onUpload) {
+	                        _this.options.onUpload(json);
+	                    }
+	                    successHandler(json);
+	                    if (_this.options.afterUpload) {
+	                        _this.options.afterUpload.call(_this, $form, json);
 	                    }
 	                }
 	                catch (_error) {
 	                    e = _error;
-	                    errorHandler(e);
+	                    errorHandler(e, null, null);
 	                }
 	                return true;
 	            }
@@ -688,15 +689,15 @@
 	        if (opts === void 0) { opts = {}; }
 	        return new Action(formsel, opts);
 	    };
+	    /**
+	     * plugin must be a constructor function.
+	     */
 	    Action.plug = function (plugin, opts) {
 	        if (opts === void 0) { opts = {}; }
 	        return Action._globalPlugins.push({
 	            plugin: plugin,
 	            options: opts
 	        });
-	    };
-	    Action.reset = function () {
-	        return Action._globalPlugins = [];
 	    };
 	    /**
 	     * Contains the the action plugin factories
@@ -726,6 +727,8 @@
 	var Action_1 = __webpack_require__(4);
 	var ActionPlugin = (function () {
 	    function ActionPlugin(a1, a2) {
+	        if (a1 === void 0) { a1 = null; }
+	        if (a2 === void 0) { a2 = null; }
 	        this.config = {};
 	        if (a1 && a2) {
 	            this.config = a2 || {};
@@ -753,12 +756,6 @@
 /***/ function(module, exports) {
 
 	"use strict";
-	/**
-	*
-	*  AJAX IFRAME METHOD (AIM)
-	*  http://www.webtoolkit.info/
-	*
-	**/
 	var AIM = {
 	    frame: function (c) {
 	        // iframe id
@@ -783,7 +780,8 @@
 	      * if you returns false, the form won't submit.
 	      */
 	    submit: function (f, c) {
-	        AIM.form(f, AIM.frame(c));
+	        // Setup form target to the frame
+	        f.setAttribute('target', AIM.frame(c));
 	        if (c && typeof (c.onStart) === 'function') {
 	            console.debug("AIM.onStart");
 	            return c.onStart();
@@ -1029,8 +1027,8 @@
 	                top: 6,
 	                right: 6
 	            }).addClass('fa fa-times-circle').click(function () {
-	                return $box.fadeOut('slow', function () {
-	                    return $box.remove();
+	                $box.fadeOut('slow', function () {
+	                    $box.remove();
 	                });
 	            });
 	            $box.append($icon).append($text);

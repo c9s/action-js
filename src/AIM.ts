@@ -4,8 +4,13 @@
 *  http://www.webtoolkit.info/
 *
 **/
+interface AIMConfig {
+  onComplete?: (responseText) => void;
+  onStart?: () => boolean;
+}
+
 var AIM = {
-  frame: function(c) {
+  frame: function(c:AIMConfig) {
     // iframe id
     var n:string = 'f' + Math.floor(Math.random() * 99999);
 
@@ -33,13 +38,14 @@ var AIM = {
     * if you returns false, the form won't submit.
     */
   submit : function(f:HTMLFormElement, c) {
-      AIM.form(f, AIM.frame(c));
-      if (c && typeof(c.onStart) === 'function') {
-          console.debug("AIM.onStart");
-          return c.onStart();
-      } else {
-          return true;
-      }
+    // Setup form target to the frame
+    f.setAttribute('target', AIM.frame(c));
+    if (c && typeof(c.onStart) === 'function') {
+      console.debug("AIM.onStart");
+      return c.onStart();
+    } else {
+      return true;
+    }
   },
 
   loaded: function(id:string) {

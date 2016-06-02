@@ -36,9 +36,13 @@ interface ActionSettings {
 
   onSubmit? ():any;
 
-  beforeSubmit? ():any;
+  beforeSubmit?: (data:any) => boolean;
 
-  beforeUpload? ():any;
+  beforeUpload?: (form:any, data:any) => void;
+
+  onUpload?: (json:any) => void;
+
+  afterUpload?: (form:any, json:any) => void;
 }
 
 export default class Action {
@@ -310,7 +314,7 @@ export default class Action {
     }
   }
 
-  _createSuccessHandler(formEl, deferred, options, cb, retrycb:Function = null) {
+  _createSuccessHandler(formEl, deferred:JQueryDeferred<any>, options, cb:Function, retrycb:Function = null) : (resp:any) => boolean {
     var $self, self;
     self = this;
     $self = jQuery(self);
@@ -360,7 +364,7 @@ export default class Action {
     };
   }
 
-  _createErrorHandler(formEl, deferred, options) {
+  _createErrorHandler(formEl, deferred:JQueryDeferred<any>, options) : (error, t, m) => void {
     return function(error, t, m) {
       if (error.responseText) {
         if (window.console) {
@@ -371,8 +375,9 @@ export default class Action {
       } else {
         console.error(error);
       }
+      deferred.reject(error);
       if (formEl && options.disableInput) {
-        return FormUtils.enableInputs(formEl);
+        FormUtils.enableInputs(formEl);
       }
     }
   }
@@ -451,7 +456,7 @@ export default class Action {
        * @return {jQuery.Deferred}
        */
     var doSubmit = (payload): JQueryDeferred<any> => {
-      var errorHandler, formEl, postUrl, successHandler;
+      var formEl, postUrl;
       if (this.options.onSubmit) {
         this.options.onSubmit();
       }
@@ -470,8 +475,8 @@ export default class Action {
       } else {
         postUrl = window.location.pathname;
       }
-      errorHandler = this._createErrorHandler(formEl, deferred, this.options);
-      successHandler = this._createSuccessHandler(formEl, deferred, this.options, cb);
+      var errorHandler = this._createErrorHandler(formEl, deferred, this.options);
+      var successHandler = this._createSuccessHandler(formEl, deferred, this.options, cb);
       jQuery.ajax(jQuery.extend(Action.ajaxOptions, {
         "url": postUrl,
         "data": payload,
@@ -532,18 +537,12 @@ export default class Action {
 
   submitWithAIM(data, cb) : JQueryDeferred<any> {
     var deferred = jQuery.Deferred();
-    var $form, actionName, errorHandler, successHandler, that;
-    $form = this.form();
-    successHandler = this._createSuccessHandler($form, deferred, this.options, cb);
-    errorHandler = this._createErrorHandler($form, deferred, this.options);
-    if (this.options.beforeUpload) {
-      this.options.beforeUpload.call(this, $form, data);
-    }
+    var actionName, that;
+    var $form = this.form();
+    var successHandler = this._createSuccessHandler($form, deferred, this.options, cb);
+    var errorHandler = this._createErrorHandler($form, deferred, this.options);
     if (!$form || !$form.get(0)) {
       throw "form element not found.";
-    }
-    if (typeof AIM === "undefined") {
-      alert("AIM is required for uploading file in ajax mode.");
     }
     actionName = $form.find('input[name="__action"]').val();
     if (!actionName) {
@@ -551,23 +550,26 @@ export default class Action {
     }
     that = this;
     AIM.submit($form.get(0), {
-      onStart: function() {
-        if (that.options.beforeUpload) {
-          that.options.beforeUpload.call(that, $form);
+      onStart: () => {
+        if (this.options.beforeUpload) {
+          this.options.beforeUpload.call(this, $form, data);
         }
         return true;
       },
-      onComplete: function(responseText) {
+      onComplete: (responseText) => {
         var e, json;
         try {
           json = JSON.parse(responseText);
-          successHandler(json, that.options.onUpload);
-          if (that.options.afterUpload) {
-            that.options.afterUpload.call(that, $form, json);
+          if (this.options.onUpload) {
+            this.options.onUpload(json);
+          }
+          successHandler(json);
+          if (this.options.afterUpload) {
+            this.options.afterUpload.call(this, $form, json);
           }
         } catch (_error) {
           e = _error;
-          errorHandler(e);
+          errorHandler(e, null, null);
         }
         return true;
       }
