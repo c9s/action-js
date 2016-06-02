@@ -45,7 +45,7 @@ export default class Action {
 
   actionName: string;
 
-  plugins: Array<Object>;
+  plugins: Array<ActionPlugin>;
 
   formEl: any;
 
