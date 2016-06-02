@@ -148,7 +148,7 @@ export default class Action {
   /**
    * add plugin
    */
-  plug(plugin, config = null) {
+  plug(plugin:any, config = null) {
     if (plugin instanceof ActionPlugin) {
       plugin.init(this);
       this.plugins.push(plugin);
@@ -162,7 +162,7 @@ export default class Action {
   /**
    * set action path
    */
-  setPath(path) {
+  setPath(path:string) {
     return this.actionPath = path;
   }
 
@@ -602,17 +602,15 @@ export default class Action {
     return new Action(formsel, opts);
   }
 
+  /**
+   * plugin must be a constructor function.
+   */
   static plug(plugin, opts = {}) {
     return Action._globalPlugins.push({
       plugin: plugin,
       options: opts
     });
   }
-
-  static reset() {
-    return Action._globalPlugins = [];
-  }
-
 }
 
 
