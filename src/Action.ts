@@ -121,7 +121,7 @@ export default class Action {
         value: 1
       }));
     }
-    return this.formEl.submit(() => {
+    this.formEl.submit(() => {
       var e, ret;
       try {
         ret = this.submit();
