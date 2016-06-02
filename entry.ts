@@ -27,7 +27,7 @@ window['Action'] = Action;
   a.submit(arg1, arg2);
 };
 
-(<any>window).runAction = function(actionName:string, args, arg1, arg2) {
+(<any>window).runAction = function(actionName:string, args, arg1 = null, arg2 = null) {
   var a = new Action;
   var funcargs:Array<any> = [actionName];
   if (typeof args === "function") {
