@@ -13,7 +13,7 @@ export default class ActionPlugin {
 
   config: any = {};
 
-  constructor(a1, a2) {
+  constructor(a1 = null, a2 = null) {
     if (a1 && a2) {
       this.config = a2 || {};
       this.init(a1);
