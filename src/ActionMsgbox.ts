@@ -49,8 +49,8 @@ export default class ActionMsgbox extends ActionPlugin {
         top: 6,
         right: 6
       }).addClass('fa fa-times-circle').click(function() {
-        return $box.fadeOut('slow', function() {
-          return $box.remove();
+        $box.fadeOut('slow', function() {
+          $box.remove();
         });
       });
       $box.append($icon).append($text);
