@@ -5,12 +5,24 @@
 *
 **/
 interface AIMConfig {
+  /**
+   * Handle Response Text
+   */
   onComplete?: (responseText) => void;
+
+  /**
+   * what onStart returns affect the form submitting,
+   * if you returns false, the form won't submit.
+   */
   onStart?: () => boolean;
 }
 
 var AIM = {
-  frame: function(c:AIMConfig) {
+
+  /**
+   * frame function returns the iframe name.
+   */
+  frame: function(c:AIMConfig) : string {
     // iframe id
     var n:string = 'f' + Math.floor(Math.random() * 99999);
 
@@ -20,16 +32,12 @@ var AIM = {
     document.body.appendChild(d);
 
     // get the iframe element
-    var i:HTMLElement = document.getElementById(n);
-    if (c && typeof(c.onComplete) == 'function') {
+    var i:HTMLIFrameElement = <HTMLIFrameElement>document.getElementById(n);
+    if (c.onComplete) {
       // assign on complete handler on the element
       i['onComplete'] = c.onComplete;
     }
     return n;
-  },
-
-  form : function(f, name) {
-    f.setAttribute('target', name);
   },
 
 
@@ -37,19 +45,19 @@ var AIM = {
     * what onStart returns affect the form submitting,
     * if you returns false, the form won't submit.
     */
-  submit : function(f:HTMLFormElement, c) {
-    // Setup form target to the frame
+  submit:function(f:HTMLFormElement, c:AIMConfig) : boolean {
+    console.debug('AIM.submit');
+    // Setup form target to the name of the iframe.
     f.setAttribute('target', AIM.frame(c));
     if (c && typeof(c.onStart) === 'function') {
       console.debug("AIM.onStart");
       return c.onStart();
-    } else {
-      return true;
     }
+    return true;
   },
 
   loaded: function(id:string) {
-    var i = <HTMLIFrameElement>document.getElementById(id);
+    var i:HTMLIFrameElement = <HTMLIFrameElement>document.getElementById(id);
     var d:Document;
     if (i.contentDocument) {
       d = i.contentDocument;
@@ -58,20 +66,21 @@ var AIM = {
     } else {
       d = window.frames[id].document;
     }
-
+    console.debug('AIM.loaded');
     if (d.location.href === "about:blank") {
+      console.error("skip about:blank");
       return;
     }
     if (typeof(i['onComplete']) === 'function') {
-      if (window.console) {
-          console.debug("AIM.onComplete");
-      }
+      console.debug("AIM.onComplete", d.body.innerHTML);
       var match = /(\{.+\})/.exec(d.body.innerHTML);
       if (match) {
         console.debug("AIM.onComplete with JSON",match[1]);
         i['onComplete'](match[1]);
+      } else {
+        throw "AIM:Unexpected response format";
       }
     }
   }
-};
+}
 export default AIM;
