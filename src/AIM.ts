@@ -4,7 +4,7 @@
 *  http://www.webtoolkit.info/
 *
 **/
-interface AIMConfig {
+export interface AIMConfig {
   /**
    * Handle Response Text
    */
@@ -66,14 +66,15 @@ var AIM = {
     } else {
       d = window.frames[id].document;
     }
-    console.debug('AIM.loaded');
+    // chances are, the page might be about:blank initially.
     if (d.location.href === "about:blank") {
-      console.error("skip about:blank");
       return;
     }
     if (typeof(i['onComplete']) === 'function') {
-      console.debug("AIM.onComplete", d.body.innerHTML);
-      var match = /(\{.+\})/.exec(d.body.innerHTML);
+      var responseText = d.body.textContent || d.body.innerHTML;
+      console.debug("AIM.onComplete", responseText);
+      // detect json output
+      var match = /(\{.+\})/.exec(responseText);
       if (match) {
         console.debug("AIM.onComplete with JSON",match[1]);
         i['onComplete'](match[1]);
