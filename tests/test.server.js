@@ -1,5 +1,21 @@
+
 describe('Action with Interaction', function() {
   Action.ajaxOptions.url = "/api";
+
+  describe('Action.run with AIM', function() {
+
+    it('should submit aim form', function(done) {
+      var a = Action.form('#formAIM', { 
+        'actionPath': '/api/aim',
+        'onUpload': function(response) {
+          console.log('onUpload', response);
+          done();
+        }
+      });
+      a.form().submit();
+    });
+  });
+
   describe('runAction TestApp::Action::Simple', function() {
     it('should return success response in the callback', function (done) {
       runAction('TestApp::Action::Simple', { "a": 1 }, function(resp) {

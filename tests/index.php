@@ -30,10 +30,18 @@ require dirname(__DIR__) . "/vendor/autoload.php";
     mocha.run();
   </script>
 
-  <form id="formWithoutSignature" class="hidden"> </form>
+  <form id="formWithoutSignature"> </form>
 
-  <form id="formSimple" class="hidden">
+  <form id="formAIM" method="post" action="/api">
     <input type="hidden" name="__action" value="TestApp::Action::Simple"/>
+    <input type="hidden" name="__ajax_request" value="1"/>
+    <input type="file" name="filefield"/>
+    <button type="submit">Upload</button>
+  </form>
+
+  <form id="formSimple">
+    <input type="hidden" name="__action" value="TestApp::Action::Simple"/>
+    <input type="hidden" name="__ajax_request" value="1"/>
     <input type="text" name="title" value="Programming JavaScript Applications: Robust Web Architecture with Node, HTML5, and Modern JS Libraries"/>
     <input type="text" name="isbn13" value="978-1491950296"/>
     <input type="text" name="isbn" value="1491950293"/>

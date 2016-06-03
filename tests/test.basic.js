@@ -9,9 +9,6 @@ describe('Basic Action', function() {
   });
 
   describe('Creating action with form', function() {
-
-
-
     it('is able to create with a simple form', function() {
       var a = new Action(document.getElementById('formSimple'));
       expect(a.form()).to.be.an('object');
