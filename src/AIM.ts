@@ -57,7 +57,7 @@ var AIM = {
   },
 
   loaded: function(id:string) {
-    var i:HTMLIFrameElement = <HTMLIFrameElement>document.getElementById(id);
+    var i = <HTMLIFrameElement>document.getElementById(id);
     var d:Document;
     if (i.contentDocument) {
       d = i.contentDocument;

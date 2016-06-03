@@ -2,14 +2,14 @@
 describe('Action with Interaction', function() {
   Action.ajaxOptions.url = "/api";
 
-  describe('Action.run with AIM', function() {
+  describe('submit Action with AIM', function() {
 
     it('should submit aim form', function(done) {
       var a = Action.form('#formAIM', { 
         // Customize post url for debugging
         'url': '/api/aim',
-        'onUpload': function(response) {
-          console.log('onUpload', response);
+        'onUpload': function(resp) {
+          expect(resp.success).to.be.true;
           done();
         }
       });

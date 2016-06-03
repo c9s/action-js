@@ -59,56 +59,64 @@ export default class Action {
     this.url = null;
     this.options = { "disableInput": true };
 
-    var form, opts = {};
-    if (arg1 instanceof jQuery) {
+    var opts = {};
+    var form:HTMLFormElement = null;
+    if (arg1 instanceof HTMLFormElement) {
       form = arg1;
-    } else if (arg1 instanceof HTMLFormElement) {
-      form = arg1;
+    } else if (arg1 instanceof jQuery) {
+      form = arg1.get(0);
     } else if (typeof arg1 === "string") {
-      form = arg1;
-    } else if (arg1 && arg2) {
-      form = arg1;
-    } else if (!arg2 && typeof arg1 === "object") {
-      opts = arg1;
+      form = <HTMLFormElement>jQuery(arg1).get(0);
     }
     if (form) {
-      this.setForm(form);
-      if (arg2) {
-        opts = arg2;
+      if (!(form instanceof HTMLFormElement)) {
+        throw "action container is not a HTMLFormElement"
       }
+      this.setForm(form);
     }
-    this.options = assign({}, opts); // copy
+
+    if (form) {
+      opts = arg2 || {};
+    } else if (typeof arg1 === "object") {
+      opts = arg1;
+    }
+
+    this.options = assign({}, opts || {}); // copy the config array
     if (this.options.plugins) {
       this.options.plugins.forEach((p) => {
         this.plug(p);
       });
     }
+
+    // Register globalPlugins to this action.
     Action._globalPlugins.forEach((p,i) => {
       var plugin = new plugin(this, p.options);
       this.plug(plugin);
     });
   }
 
-  /**
-   * @param {HTMLFormElement|jQuery} f
-   */
-  setForm(f) {
+  setForm(f:HTMLFormElement) {
     this.formEl = jQuery(f);
-    this.formEl.attr('method', 'post');
-    this.formEl.attr("enctype", "multipart/form-data");
+    f.setAttribute("method", "post");
+    f.setAttribute("enctype", "multipart/form-data");
+
     this.formEl.data("actionObject", this);
-    this.actionName = this.formEl.find('input[name=__action]').val();
-    if (!this.formEl.get(0)) {
-      throw "action form element not found";
+
+    if (typeof f.elements['__action'] === "undefined") {
+      throw "__action signature field is undefined.";
     }
+
+    this.actionName = f.elements['__action'].value;
+
     if (!this.actionName) {
-      throw "action signature is undefined.";
+      throw "empty action signature name.";
     }
-    if (!this.formEl.find('input[name="__ajax_request"]').get(0)) {
+
+    if (typeof f.elements['__ajax_request'] === "undefined") {
       this.formEl.append(jQuery('<input>').attr({
-        type: "hidden",
-        name: "__ajax_request",
-        value: 1
+        'type': "hidden",
+        'name': "__ajax_request",
+        'value': 1
       }));
     }
 
@@ -128,8 +136,26 @@ export default class Action {
     });
   }
 
-  form(f = null) {
+
+  /**
+   * Set form element
+   *
+   * @param f {HTMLFormElement|string|jQuery}
+   */
+  public form(f = null) {
     if (f) {
+      if (typeof f === "string") {
+        f = jQuery(f);
+      }
+      if (f instanceof jQuery) {
+        f = f.get(0);
+      }
+      if (!f) {
+        throw "action form element not found";
+      }
+      if (!(f instanceof HTMLFormElement)) {
+        throw "Unsupported form object."
+      }
       this.setForm(f);
     }
     return this.formEl;
@@ -138,7 +164,7 @@ export default class Action {
   /**
    * add plugin
    */
-  plug(plugin:any, config = null) {
+  public plug(plugin:any, config = null) {
     if (plugin instanceof ActionPlugin) {
       plugin.init(this);
       this.plugins.push(plugin);
