@@ -24,53 +24,9 @@ import "jquery";
 import ActionPlugin from "./ActionPlugin";
 import FormUtils from "./FormUtils";
 import AIM from "./AIM";
+import ActionSettings from "./ActionSettings";
 import assign = require("object-assign");
 
-interface ActionSettings {
-
-  /**
-   * An optional gateway path for sending actions
-   */
-  actionPath?: string;
-
-  plugins?: Array<ActionPlugin>;
-
-  confirm?: string;
-
-  disableInput?: boolean;
-
-
-
-  removeRegion?: HTMLElement|JQuery;
-
-  emptyRegion?: HTMLElement|JQuery;
-
-  removeTr?: HTMLElement|JQuery;
-
-  remove?: HTMLElement|JQuery;
-
-  clear?: boolean;
-
-  fadeOut?: boolean;
-
-
-
-  onSubmit?: () => void;
-
-  onSuccess?: (resp:any) => void;
-
-  beforeSubmit?: (data:any) => boolean;
-
-  beforeUpload?: (form:any, data:any) => void;
-
-  onUpload?: (json:any) => void;
-
-  afterUpload?: (form:any, json:any) => void;
-
-
-
-
-}
 
 export default class Action {
 
@@ -82,7 +38,11 @@ export default class Action {
 
   options: ActionSettings;
 
-  actionPath: string;
+
+  /**
+   * the path to submit action
+   */
+  url: string;
 
   /**
    * Contains the the action plugin factories
@@ -97,7 +57,7 @@ export default class Action {
 
   constructor(arg1 = null, arg2 = null) {
     this.plugins = [];
-    this.actionPath = null;
+    this.url = null;
     this.options = { "disableInput": true };
 
     var form, opts = {};
@@ -152,17 +112,17 @@ export default class Action {
         value: 1
       }));
     }
-    this.formEl.submit(() => {
-      var e, ret;
+
+    // trigger Action.submit method by the form binding
+    this.formEl.submit((e) => {
       try {
-        ret = this.submit();
-        if (ret) {
-          return ret;
-        }
-      } catch (_error) {
-        e = _error;
+        // for AIM, we need to trigger submit action
+        // for pure ajax action, we need to return false to
+        // send action manually.
+        return this.submit();
+      } catch (err) {
         if (window.console) {
-          console.error("Form submit error", e.message, e);
+          console.error("Form submit error", err.message, err);
         }
       }
       return false;
@@ -194,7 +154,7 @@ export default class Action {
    * set action path
    */
   setPath(path:string) {
-    return this.actionPath = path;
+    this.url = path;
   }
 
   /**
@@ -392,7 +352,7 @@ export default class Action {
   }
 
   _createErrorHandler(formEl, deferred:JQueryDeferred<any>, options) : (error, t, m) => void {
-    return function(error, t, m) {
+    return (error, t, m) => {
       if (error.responseText) {
         if (window.console) {
           console.error(error.responseText);
@@ -411,51 +371,15 @@ export default class Action {
 
 
   /* 
-  
-  run method
-  
+  Run action with pure ajax request.
+
   .run() or runAction()
     run specific action
-  
   .run( 'Delete' , { table: 'products' , id: id } , function() { ... });
-  
-  
   .run( [action name] , [arguments] , [options] or [callback] );
   .run( [action name] , [arguments] , [options] , [callback] );
-  
-  
-  Event callbacks:
-  
-      * onSubmit:    [callback]
-              callback before sending request
-  
-      * onSuccess:   [callback]
-              success callback.
-  
-  options:
-      * confirm:    [text]    
-              should confirm 
-  
-      * removeRegion: [element] 
-              the element in the region. to remove region.
-  
-      * emptyRegion:  [element] 
-              the element in the region. to empty region.
-  
-  
-      * removeTr:   [element] 
-              the element in the tr.
-  
-      * remove:   [element] 
-              the element to be removed.
-  
-      * clear:    [bool]
-              clear text fields
-  
-      * fadeOut:    [hide]
-              hide the form if success
-    */
 
+  */
   run(actionName:string, args, arg1 = null, arg2 = null) : JQueryDeferred<any> {
     var cb, payload;
     if (typeof arg1 === "function") {
@@ -495,12 +419,10 @@ export default class Action {
       }
       if (formEl && formEl.attr('action')) {
         postUrl = formEl.attr('action');
-      } else if (this.actionPath) {
-        postUrl = this.actionPath;
-      } else if (Action.ajaxOptions.url) {
-        postUrl = Action.ajaxOptions.url;
       } else {
-        postUrl = window.location.pathname;
+        postUrl = this.url 
+            || Action.ajaxOptions.url
+            || window.location.pathname;
       }
       var errorHandler = this._createErrorHandler(formEl, deferred, this.options);
       var successHandler = this._createSuccessHandler(formEl, deferred, this.options, cb);
@@ -532,12 +454,13 @@ export default class Action {
    * submit(option , callback )
    * submit(callback )
    *
+   * @return boolean
    */
-  submit(arg1 = null, arg2 = null):boolean {
+  public submit(arg1 = null, arg2 = null): boolean {
     var $form, cb, data, ret, that;
     that = this;
     if (typeof arg1 === "object") {
-      this.options = jQuery.extend(this.options, arg1);
+      this.options = assign(this.options, arg1);
       if (arg2 && typeof arg2 === "function") {
         cb = arg2;
       }
@@ -554,17 +477,19 @@ export default class Action {
       }
     }
     jQuery(this).trigger('action.before_submit', [data]);
+
     if ($form.find("input[type=file]").get(0) && $form.find('input[type=file]').parents('form').get(0) === $form.get(0)) {
+      // depends on the return value of AIM.onStart
       this.submitWithAIM(data, cb);
-      return false;
+      return true;
     }
     this.run(data.action, data);
     return false;
   }
 
-  submitWithAIM(data, cb) : JQueryDeferred<any> {
+  submitWithAIM(data, cb:Function = null):JQueryDeferred<any> {
     var deferred = jQuery.Deferred();
-    var actionName, that;
+    var actionName;
     var $form = this.form();
     var successHandler = this._createSuccessHandler($form, deferred, this.options, cb);
     var errorHandler = this._createErrorHandler($form, deferred, this.options);
@@ -575,18 +500,18 @@ export default class Action {
     if (!actionName) {
       throw "action name field is required";
     }
-    that = this;
     AIM.submit($form.get(0), {
-      onStart: () => {
+      'onStart': ():boolean => {
         if (this.options.beforeUpload) {
           this.options.beforeUpload.call(this, $form, data);
         }
+        // must start 
         return true;
       },
-      onComplete: (responseText) => {
-        var e, json;
+      'onComplete': (responseText) => {
         try {
-          json = JSON.parse(responseText);
+          var json = JSON.parse(responseText);
+          console.debug("AIM response",json);
           if (this.options.onUpload) {
             this.options.onUpload(json);
           }
@@ -594,11 +519,9 @@ export default class Action {
           if (this.options.afterUpload) {
             this.options.afterUpload.call(this, $form, json);
           }
-        } catch (_error) {
-          e = _error;
-          errorHandler(e, null, null);
+        } catch (err) {
+          errorHandler(err, null, null);
         }
-        return true;
       }
     });
     return deferred;
@@ -618,7 +541,7 @@ export default class Action {
     } else if (typeof arg1 === "function") {
       cb = arg1;
     }
-    data = jQuery.extend(this.getFormData(), extendData);
+    data = assign(this.getFormData(), extendData);
     return this.run(data.action, data, options, cb);
   }
 
@@ -627,14 +550,14 @@ export default class Action {
   /**
    * Construct an Action from form elements
    */
-  static form(formsel, opts = {}) : Action {
-    return new Action(formsel, opts);
+  public static form(formsel, config:ActionSettings = {}) : Action {
+    return new Action(formsel, config);
   }
 
   /**
    * plugin must be a constructor function.
    */
-  static plug(plugin, opts = {}) {
+  public static plug(plugin, opts = {}) {
     return Action._globalPlugins.push({
       plugin: plugin,
       options: opts

@@ -17,8 +17,8 @@ export interface AIMConfig {
   onStart?: () => boolean;
 }
 
-var AIM = {
 
+var AIM = {
   /**
    * frame function returns the iframe name.
    */

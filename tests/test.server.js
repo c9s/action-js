@@ -6,7 +6,8 @@ describe('Action with Interaction', function() {
 
     it('should submit aim form', function(done) {
       var a = Action.form('#formAIM', { 
-        'actionPath': '/api/aim',
+        // Customize post url for debugging
+        'url': '/api/aim',
         'onUpload': function(response) {
           console.log('onUpload', response);
           done();
