@@ -16,10 +16,12 @@ export interface ActionSettings {
   disableInput?: boolean;
 
 
+  reload?: boolean;
 
-  removeRegion?: HTMLElement|JQuery;
+  delay?: number;
 
-  emptyRegion?: HTMLElement|JQuery;
+  redirect?: string;
+
 
   removeTr?: HTMLElement|JQuery;
 
@@ -28,6 +30,22 @@ export interface ActionSettings {
   clear?: boolean;
 
   fadeOut?: boolean;
+
+
+  /**
+   * region related options
+   */
+  refreshSelf?: any;
+
+  refresh?: any;
+
+  refreshParent?: any;
+
+  refreshWithId?: any;
+
+  removeRegion?: HTMLElement|JQuery;
+
+  emptyRegion?: HTMLElement|JQuery;
 
 
 

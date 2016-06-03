@@ -27,6 +27,17 @@ import AIM from "./AIM";
 import {ActionSettings} from "./ActionSettings";
 import assign = require("object-assign");
 
+interface ActionResponse {
+  success?: boolean;
+  error?: boolean;
+
+  message?: string;
+  data?: any;
+
+  redirect?: string;
+  delay?: number;
+}
+
 export default class Action {
 
   actionName: string;
@@ -61,21 +72,21 @@ export default class Action {
 
     var opts = {};
     var form:HTMLFormElement = null;
+
+    if (typeof arg1 === "string") {
+      arg1 = jQuery(arg1);
+    }
+    if (arg1 instanceof jQuery) {
+      arg1 = arg1.get(0);
+    }
     if (arg1 instanceof HTMLFormElement) {
       form = arg1;
-    } else if (arg1 instanceof jQuery) {
-      form = arg1.get(0);
-    } else if (typeof arg1 === "string") {
-      form = <HTMLFormElement>jQuery(arg1).get(0);
     }
     if (form) {
       if (!(form instanceof HTMLFormElement)) {
         throw "action container is not a HTMLFormElement"
       }
       this.setForm(form);
-    }
-
-    if (form) {
       opts = arg2 || {};
     } else if (typeof arg1 === "object") {
       opts = arg1;
@@ -241,7 +252,7 @@ export default class Action {
     return this;
   }
 
-  _processElementOptions(options) {
+  _processElementOptions(options:ActionSettings, resp:ActionResponse) {
     var el;
     if (options.removeTr) {
       el = jQuery(jQuery(options.removeTr).parents('tr').get(0));
@@ -254,7 +265,7 @@ export default class Action {
     }
   }
 
-  _processFormOptions(options, resp) {
+  private _processFormOptions(options:ActionSettings, resp:ActionResponse) {
     if (options.clear) {
       FormUtils.findTextFields(this.form()).each(function(i, e) {
         var n;
@@ -270,7 +281,7 @@ export default class Action {
     }
   }
 
-  _processLocationOptions(options, resp) {
+  private _processLocationOptions(options:ActionSettings, resp:ActionResponse) {
     if (options.reload) {
       return setTimeout((function() {
         window.location.reload();
@@ -286,7 +297,7 @@ export default class Action {
     }
   }
 
-  _processRegionOptions(options, resp) {
+  private _processRegionOptions(options:ActionSettings, resp:ActionResponse) {
     var form, reg;
     if (typeof Region === "undefined") {
       console.warn("Region is undefined. region-js is not loaded.");
@@ -326,30 +337,27 @@ export default class Action {
     }
   }
 
-  _createSuccessHandler(formEl, deferred:JQueryDeferred<any>, options, cb:Function, retrycb:Function = null) : (resp:any) => boolean {
-    var $self, self;
-    self = this;
-    $self = jQuery(self);
-    return function(resp) {
+  protected _createSuccessHandler(formEl, deferred:JQueryDeferred<any>, options, cb:Function, retrycb:Function = null) : (resp:any) => boolean {
+    return (resp) => {
       var debugDiv, ret;
-      $self.trigger('action.result', [resp]);
+      $(this).trigger('action.result', [resp]);
       if (formEl && options.disableInput) {
         FormUtils.enableInputs(formEl);
       }
       if (cb) {
-        ret = cb.call(self, resp);
+        ret = cb.call(this, resp);
         if (ret) {
           return ret;
         }
       }
       if (resp.success) {
         if (options.onSuccess) {
-          options.onSuccess.apply(self, [resp]);
+          options.onSuccess.apply(this, [resp]);
         }
-        self._processFormOptions(options, resp);
-        self._processRegionOptions(options, resp);
-        self._processElementOptions(options, resp);
-        self._processLocationOptions(options, resp);
+        this._processFormOptions(options, resp);
+        this._processRegionOptions(options, resp);
+        this._processElementOptions(options, resp);
+        this._processLocationOptions(options, resp);
         deferred.resolve(resp);
       } else if (resp.error) {
         deferred.reject(resp);
@@ -357,7 +365,7 @@ export default class Action {
           console.error("csrf token mismatched", resp);
         }
         if (options.onError) {
-          options.onError.apply(self, [resp]);
+          options.onError.apply(this, [resp]);
         }
         if (window.console) {
           console.error("Returned error", resp.message, resp);
