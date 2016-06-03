@@ -28,13 +28,36 @@ import assign = require("object-assign");
 
 interface ActionSettings {
 
+  /**
+   * An optional gateway path for sending actions
+   */
+  actionPath?: string;
+
   plugins?: Array<ActionPlugin>;
 
   confirm?: string;
 
   disableInput?: boolean;
 
-  onSubmit? ():any;
+
+
+  removeRegion?: HTMLElement|JQuery;
+
+  emptyRegion?: HTMLElement|JQuery;
+
+  removeTr?: HTMLElement|JQuery;
+
+  remove?: HTMLElement|JQuery;
+
+  clear?: boolean;
+
+  fadeOut?: boolean;
+
+
+
+  onSubmit?: () => void;
+
+  onSuccess?: (resp:any) => void;
 
   beforeSubmit?: (data:any) => boolean;
 
@@ -43,6 +66,10 @@ interface ActionSettings {
   onUpload?: (json:any) => void;
 
   afterUpload?: (form:any, json:any) => void;
+
+
+
+
 }
 
 export default class Action {
