@@ -24,9 +24,8 @@ import "jquery";
 import ActionPlugin from "./ActionPlugin";
 import FormUtils from "./FormUtils";
 import AIM from "./AIM";
-import ActionSettings from "./ActionSettings";
+import {ActionSettings} from "./ActionSettings";
 import assign = require("object-assign");
-
 
 export default class Action {
 

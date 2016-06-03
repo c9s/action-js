@@ -1,7 +1,8 @@
 
+import "jquery";
 import ActionPlugin from "./ActionPlugin";
 
-interface ActionSettings {
+export interface ActionSettings {
 
   /**
    * An optional gateway path for sending actions
