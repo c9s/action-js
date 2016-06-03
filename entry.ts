@@ -7,7 +7,9 @@ import ActionMsgbox from "./src/ActionMsgbox";
 import ActionGrowler from "./src/ActionGrowl";
 import ActionBootstrapHighlight from "./src/ActionBootstrapHighlight";
 import BootstrapFormHighlight from "./src/BootstrapFormHighlight";
+import AIM from "./src/AIM";
 
+window['AIM'] = AIM;
 window['ActionMsgbox'] = ActionMsgbox;
 window['FormUtils'] = FormUtils;
 window['BootstrapFormHighlight'] = BootstrapFormHighlight;
@@ -27,7 +29,7 @@ window['Action'] = Action;
   a.submit(arg1, arg2);
 };
 
-(<any>window).runAction = function(actionName:string, args, arg1 = null, arg2 = null) {
+(<any>window).runAction = function(actionName:string, args, arg1 = null, arg2 = null) : JQueryDeferred<any> {
   var a = new Action;
   var funcargs:Array<any> = [actionName];
   if (typeof args === "function") {
