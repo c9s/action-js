@@ -25,18 +25,8 @@ import ActionPlugin from "./ActionPlugin";
 import FormUtils from "./FormUtils";
 import AIM from "./AIM";
 import {ActionSettings} from "./ActionSettings";
+import {ActionResponse} from "./ActionResponse";
 import assign = require("object-assign");
-
-interface ActionResponse {
-  success?: boolean;
-  error?: boolean;
-
-  message?: string;
-  data?: any;
-
-  redirect?: string;
-  delay?: number;
-}
 
 export default class Action {
 
