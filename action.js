@@ -60,6 +60,8 @@
 	var ActionGrowl_1 = __webpack_require__(10);
 	var ActionBootstrapHighlight_1 = __webpack_require__(11);
 	var BootstrapFormHighlight_1 = __webpack_require__(12);
+	var AIM_1 = __webpack_require__(6);
+	window['AIM'] = AIM_1["default"];
 	window['ActionMsgbox'] = ActionMsgbox_1["default"];
 	window['FormUtils'] = FormUtils_1["default"];
 	window['BootstrapFormHighlight'] = BootstrapFormHighlight_1["default"];
@@ -151,84 +153,98 @@
 	        if (arg1 === void 0) { arg1 = null; }
 	        if (arg2 === void 0) { arg2 = null; }
 	        this.plugins = [];
-	        this.actionPath = null;
+	        this.url = null;
 	        this.options = { "disableInput": true };
-	        var form, opts = {};
+	        var opts = {};
+	        var form = null;
+	        if (typeof arg1 === "string") {
+	            arg1 = jQuery(arg1);
+	        }
 	        if (arg1 instanceof jQuery) {
-	            form = arg1;
+	            arg1 = arg1.get(0);
 	        }
-	        else if (arg1 instanceof HTMLFormElement) {
+	        if (arg1 instanceof HTMLFormElement) {
 	            form = arg1;
-	        }
-	        else if (typeof arg1 === "string") {
-	            form = arg1;
-	        }
-	        else if (arg1 && arg2) {
-	            form = arg1;
-	        }
-	        else if (!arg2 && typeof arg1 === "object") {
-	            opts = arg1;
 	        }
 	        if (form) {
-	            this.setForm(form);
-	            if (arg2) {
-	                opts = arg2;
+	            if (!(form instanceof HTMLFormElement)) {
+	                throw "action container is not a HTMLFormElement";
 	            }
+	            this.setForm(form);
+	            opts = arg2 || {};
 	        }
-	        this.options = assign({}, opts); // copy
+	        else if (typeof arg1 === "object") {
+	            opts = arg1;
+	        }
+	        this.options = assign({}, opts || {}); // copy the config array
 	        if (this.options.plugins) {
 	            this.options.plugins.forEach(function (p) {
 	                _this.plug(p);
 	            });
 	        }
+	        // Register globalPlugins to this action.
 	        Action._globalPlugins.forEach(function (p, i) {
-	            var plugin = new plugin(_this, p.options);
+	            var cls = p.plugin;
+	            var plugin = new cls(_this, p.options || {});
 	            _this.plug(plugin);
 	        });
 	    }
-	    /**
-	     * @param {HTMLFormElement|jQuery} f
-	     */
 	    Action.prototype.setForm = function (f) {
 	        var _this = this;
 	        this.formEl = jQuery(f);
-	        this.formEl.attr('method', 'post');
-	        this.formEl.attr("enctype", "multipart/form-data");
+	        f.setAttribute("method", "post");
+	        f.setAttribute("enctype", "multipart/form-data");
 	        this.formEl.data("actionObject", this);
-	        this.actionName = this.formEl.find('input[name=__action]').val();
-	        if (!this.formEl.get(0)) {
-	            throw "action form element not found";
+	        if (typeof f.elements['__action'] === "undefined") {
+	            throw "__action signature field is undefined.";
 	        }
+	        this.actionName = f.elements['__action'].value;
 	        if (!this.actionName) {
-	            throw "action signature is undefined.";
+	            throw "empty action signature name.";
 	        }
-	        if (!this.formEl.find('input[name="__ajax_request"]').get(0)) {
+	        if (typeof f.elements['__ajax_request'] === "undefined") {
 	            this.formEl.append(jQuery('<input>').attr({
-	                type: "hidden",
-	                name: "__ajax_request",
-	                value: 1
+	                'type': "hidden",
+	                'name': "__ajax_request",
+	                'value': 1
 	            }));
 	        }
-	        this.formEl.submit(function () {
-	            var e, ret;
+	        // trigger Action.submit method by the form binding
+	        this.formEl.submit(function (e) {
 	            try {
-	                ret = _this.submit();
-	                if (ret) {
-	                    return ret;
-	                }
+	                // for AIM, we need to trigger submit action
+	                // for pure ajax action, we need to return false to
+	                // send action manually.
+	                return _this.submit();
 	            }
-	            catch (_error) {
-	                e = _error;
+	            catch (err) {
 	                if (window.console) {
-	                    console.error("Form submit error", e.message, e);
+	                    console.error("Form submit error", err.message, err);
 	                }
 	            }
 	            return false;
 	        });
 	    };
+	    /**
+	     * Set form element
+	     *
+	     * @param f {HTMLFormElement|string|jQuery}
+	     */
 	    Action.prototype.form = function (f) {
 	        if (f === void 0) { f = null; }
 	        if (f) {
+	            if (typeof f === "string") {
+	                f = jQuery(f);
+	            }
+	            if (f instanceof jQuery) {
+	                f = f.get(0);
+	            }
+	            if (!f) {
+	                throw "action form element not found";
+	            }
+	            if (!(f instanceof HTMLFormElement)) {
+	                throw "Unsupported form object.";
+	            }
 	            this.setForm(f);
 	        }
 	        return this.formEl;
@@ -252,7 +268,7 @@
 	     * set action path
 	     */
 	    Action.prototype.setPath = function (path) {
-	        return this.actionPath = path;
+	        this.url = path;
 	    };
 	    /**
 	     * get the current data from the form
@@ -312,7 +328,7 @@
 	        this.options = jQuery.extend(this.options, options);
 	        return this;
 	    };
-	    Action.prototype._processElementOptions = function (options) {
+	    Action.prototype._processElementOptions = function (options, resp) {
 	        var el;
 	        if (options.removeTr) {
 	            el = jQuery(jQuery(options.removeTr).parents('tr').get(0));
@@ -395,30 +411,28 @@
 	        }
 	    };
 	    Action.prototype._createSuccessHandler = function (formEl, deferred, options, cb, retrycb) {
+	        var _this = this;
 	        if (retrycb === void 0) { retrycb = null; }
-	        var $self, self;
-	        self = this;
-	        $self = jQuery(self);
 	        return function (resp) {
 	            var debugDiv, ret;
-	            $self.trigger('action.result', [resp]);
+	            $(_this).trigger('action.result', [resp]);
 	            if (formEl && options.disableInput) {
 	                FormUtils_1["default"].enableInputs(formEl);
 	            }
 	            if (cb) {
-	                ret = cb.call(self, resp);
+	                ret = cb.call(_this, resp);
 	                if (ret) {
 	                    return ret;
 	                }
 	            }
 	            if (resp.success) {
 	                if (options.onSuccess) {
-	                    options.onSuccess.apply(self, [resp]);
+	                    options.onSuccess.apply(_this, [resp]);
 	                }
-	                self._processFormOptions(options, resp);
-	                self._processRegionOptions(options, resp);
-	                self._processElementOptions(options, resp);
-	                self._processLocationOptions(options, resp);
+	                _this._processFormOptions(options, resp);
+	                _this._processRegionOptions(options, resp);
+	                _this._processElementOptions(options, resp);
+	                _this._processLocationOptions(options, resp);
 	                deferred.resolve(resp);
 	            }
 	            else if (resp.error) {
@@ -427,7 +441,7 @@
 	                    console.error("csrf token mismatched", resp);
 	                }
 	                if (options.onError) {
-	                    options.onError.apply(self, [resp]);
+	                    options.onError.apply(_this, [resp]);
 	                }
 	                if (window.console) {
 	                    console.error("Returned error", resp.message, resp);
@@ -467,50 +481,15 @@
 	        };
 	    };
 	    /*
-	    
-	    run method
-	    
+	    Run action with pure ajax request.
+	  
 	    .run() or runAction()
 	      run specific action
-	    
 	    .run( 'Delete' , { table: 'products' , id: id } , function() { ... });
-	    
-	    
 	    .run( [action name] , [arguments] , [options] or [callback] );
 	    .run( [action name] , [arguments] , [options] , [callback] );
-	    
-	    
-	    Event callbacks:
-	    
-	        * onSubmit:    [callback]
-	                callback before sending request
-	    
-	        * onSuccess:   [callback]
-	                success callback.
-	    
-	    options:
-	        * confirm:    [text]
-	                should confirm
-	    
-	        * removeRegion: [element]
-	                the element in the region. to remove region.
-	    
-	        * emptyRegion:  [element]
-	                the element in the region. to empty region.
-	    
-	    
-	        * removeTr:   [element]
-	                the element in the tr.
-	    
-	        * remove:   [element]
-	                the element to be removed.
-	    
-	        * clear:    [bool]
-	                clear text fields
-	    
-	        * fadeOut:    [hide]
-	                hide the form if success
-	      */
+	  
+	    */
 	    Action.prototype.run = function (actionName, args, arg1, arg2) {
 	        var _this = this;
 	        if (arg1 === void 0) { arg1 = null; }
@@ -551,14 +530,10 @@
 	            if (formEl && formEl.attr('action')) {
 	                postUrl = formEl.attr('action');
 	            }
-	            else if (_this.actionPath) {
-	                postUrl = _this.actionPath;
-	            }
-	            else if (Action.ajaxOptions.url) {
-	                postUrl = Action.ajaxOptions.url;
-	            }
 	            else {
-	                postUrl = window.location.pathname;
+	                postUrl = _this.url
+	                    || Action.ajaxOptions.url
+	                    || window.location.pathname;
 	            }
 	            var errorHandler = _this._createErrorHandler(formEl, deferred, _this.options);
 	            var successHandler = _this._createSuccessHandler(formEl, deferred, _this.options, cb);
@@ -588,6 +563,7 @@
 	     * submit(option , callback )
 	     * submit(callback )
 	     *
+	     * @return boolean
 	     */
 	    Action.prototype.submit = function (arg1, arg2) {
 	        if (arg1 === void 0) { arg1 = null; }
@@ -595,7 +571,7 @@
 	        var $form, cb, data, ret, that;
 	        that = this;
 	        if (typeof arg1 === "object") {
-	            this.options = jQuery.extend(this.options, arg1);
+	            this.options = assign(this.options, arg1);
 	            if (arg2 && typeof arg2 === "function") {
 	                cb = arg2;
 	            }
@@ -613,16 +589,18 @@
 	        }
 	        jQuery(this).trigger('action.before_submit', [data]);
 	        if ($form.find("input[type=file]").get(0) && $form.find('input[type=file]').parents('form').get(0) === $form.get(0)) {
+	            // depends on the return value of AIM.onStart
 	            this.submitWithAIM(data, cb);
-	            return false;
+	            return true;
 	        }
 	        this.run(data.action, data);
 	        return false;
 	    };
 	    Action.prototype.submitWithAIM = function (data, cb) {
 	        var _this = this;
+	        if (cb === void 0) { cb = null; }
 	        var deferred = jQuery.Deferred();
-	        var actionName, that;
+	        var actionName;
 	        var $form = this.form();
 	        var successHandler = this._createSuccessHandler($form, deferred, this.options, cb);
 	        var errorHandler = this._createErrorHandler($form, deferred, this.options);
@@ -633,18 +611,18 @@
 	        if (!actionName) {
 	            throw "action name field is required";
 	        }
-	        that = this;
 	        AIM_1["default"].submit($form.get(0), {
-	            onStart: function () {
+	            'onStart': function () {
 	                if (_this.options.beforeUpload) {
 	                    _this.options.beforeUpload.call(_this, $form, data);
 	                }
+	                // must start 
 	                return true;
 	            },
-	            onComplete: function (responseText) {
-	                var e, json;
+	            'onComplete': function (responseText) {
 	                try {
-	                    json = JSON.parse(responseText);
+	                    var json = JSON.parse(responseText);
+	                    console.debug("AIM response", json);
 	                    if (_this.options.onUpload) {
 	                        _this.options.onUpload(json);
 	                    }
@@ -653,11 +631,9 @@
 	                        _this.options.afterUpload.call(_this, $form, json);
 	                    }
 	                }
-	                catch (_error) {
-	                    e = _error;
-	                    errorHandler(e, null, null);
+	                catch (err) {
+	                    errorHandler(err, null, null);
 	                }
-	                return true;
 	            }
 	        });
 	        return deferred;
@@ -679,15 +655,15 @@
 	        else if (typeof arg1 === "function") {
 	            cb = arg1;
 	        }
-	        data = jQuery.extend(this.getFormData(), extendData);
+	        data = assign(this.getFormData(), extendData);
 	        return this.run(data.action, data, options, cb);
 	    };
 	    /**
 	     * Construct an Action from form elements
 	     */
-	    Action.form = function (formsel, opts) {
-	        if (opts === void 0) { opts = {}; }
-	        return new Action(formsel, opts);
+	    Action.form = function (formsel, config) {
+	        if (config === void 0) { config = {}; }
+	        return new Action(formsel, config);
 	    };
 	    /**
 	     * plugin must be a constructor function.
@@ -757,6 +733,9 @@
 
 	"use strict";
 	var AIM = {
+	    /**
+	     * frame function returns the iframe name.
+	     */
 	    frame: function (c) {
 	        // iframe id
 	        var n = 'f' + Math.floor(Math.random() * 99999);
@@ -766,29 +745,25 @@
 	        document.body.appendChild(d);
 	        // get the iframe element
 	        var i = document.getElementById(n);
-	        if (c && typeof (c.onComplete) == 'function') {
+	        if (c.onComplete) {
 	            // assign on complete handler on the element
 	            i['onComplete'] = c.onComplete;
 	        }
 	        return n;
-	    },
-	    form: function (f, name) {
-	        f.setAttribute('target', name);
 	    },
 	    /**
 	      * what onStart returns affect the form submitting,
 	      * if you returns false, the form won't submit.
 	      */
 	    submit: function (f, c) {
-	        // Setup form target to the frame
+	        console.debug('AIM.submit');
+	        // Setup form target to the name of the iframe.
 	        f.setAttribute('target', AIM.frame(c));
 	        if (c && typeof (c.onStart) === 'function') {
 	            console.debug("AIM.onStart");
 	            return c.onStart();
 	        }
-	        else {
-	            return true;
-	        }
+	        return true;
 	    },
 	    loaded: function (id) {
 	        var i = document.getElementById(id);
@@ -802,17 +777,21 @@
 	        else {
 	            d = window.frames[id].document;
 	        }
+	        // chances are, the page might be about:blank initially.
 	        if (d.location.href === "about:blank") {
 	            return;
 	        }
 	        if (typeof (i['onComplete']) === 'function') {
-	            if (window.console) {
-	                console.debug("AIM.onComplete");
-	            }
-	            var match = /(\{.+\})/.exec(d.body.innerHTML);
+	            var responseText = d.body.textContent || d.body.innerHTML;
+	            console.debug("AIM.onComplete", responseText);
+	            // detect json output
+	            var match = /(\{.+\})/.exec(responseText);
 	            if (match) {
 	                console.debug("AIM.onComplete with JSON", match[1]);
 	                i['onComplete'](match[1]);
+	            }
+	            else {
+	                throw "AIM:Unexpected response format";
 	            }
 	        }
 	    }
