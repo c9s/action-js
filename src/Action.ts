@@ -28,6 +28,13 @@ import {ActionSettings} from "./ActionSettings";
 import {ActionResponse} from "./ActionResponse";
 import assign = require("object-assign");
 
+interface GlobalPluginPreset {
+  plugin: Function;
+  options: any;
+}
+
+
+
 export default class Action {
 
   actionName: string;
@@ -91,7 +98,8 @@ export default class Action {
 
     // Register globalPlugins to this action.
     Action._globalPlugins.forEach((p,i) => {
-      var plugin = new plugin(this, p.options);
+      var cls = p.plugin;
+      var plugin = new cls(this, p.options || {});
       this.plug(plugin);
     });
   }
