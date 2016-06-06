@@ -13,14 +13,26 @@ To initialize a form with Action:
 After the form is initialized, when user clicks on the submit button, the form
 submittion will be transformed into an AJAX call to the backend.
 
+Adding plugin:
+
+    a.plug(new ActionBootstrapHighlight)
+
+    a.plug(new ActionMsgbox({
+        container: $('#msgContainer')
+    }));
 
 ### PLUGINS
 
 Currently, there are few plugins you can plug into the action.
 
 - ActionBootstrapHighlight - a plugin that automatically highlights the fields by the
-  validation result sent from server.
+  validation result sent from server side ActionKit.
 
+- ActionGrowler - a plugin that pop-up the action result in MacGrowl-style
+  message.
+
+- ActionMsgbox - a plugin that renders the action result in the message box on
+  the top of the form.
 
 
 ## BUILD
