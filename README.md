@@ -3,14 +3,34 @@ Action JS
 
 The powerful javascript library for connecting form components with backend protocols.
 
-## Build
+
+## USAGE
+
+To initialize a form with Action:
+
+    var a = Action.form(document.getElementById('formSimple'))
+
+After the form is initialized, when user clicks on the submit button, the form
+submittion will be transformed into an AJAX call to the backend.
+
+
+### PLUGINS
+
+Currently, there are few plugins you can plug into the action.
+
+- ActionBootstrapHighlight - a plugin that automatically highlights the fields by the
+  validation result sent from server.
+
+
+
+## BUILD
 
     composer install
     typings install
     npm install
     webpack
 
-## Development
+## DEVELOPMENT
 
 Start webpack-dev-server
 
@@ -18,7 +38,7 @@ Start webpack-dev-server
 
 Setup `action-js.dev` virtual host for running ActionKit in PHP.
 
-## Backlog: TypeScript Migration Steps
+## BACKLOG: TypeScript Migration Steps
 
 ### Install Prerequisite
 
